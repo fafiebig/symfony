@@ -4,7 +4,7 @@ CHANGELOG
 7.0
 ---
 
- * Removed `Email::attachPart()`, use `Email::addPart()` instead
+ * Remove `Email::attachPart()`, use `Email::addPart()` instead
  * Argument `$body` is now required (at least null) in `Message::setBody()`
 
 6.3

@@ -119,6 +119,7 @@ Lock
 ----
 
  * Add parameter `$isSameDatabase` to `DoctrineDbalStore::configureSchema()`
+ * Remove `gcProbablity` workaround in `MongoDbStore::__construct()` options, use `gcProbability` instead
 
 Messenger
 ---------

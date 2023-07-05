@@ -5,7 +5,7 @@ CHANGELOG
 ---
 
  * Add parameter `$isSameDatabase` to `DoctrineDbalStore::configureSchema()`
- * Remove `gcProbablity` workaround in `MongoDbStore::__construct()` options, use `gcProbability` instead
+ * Remove the `gcProbablity` (notice the typo) option, use `gcProbability` instead
 
 6.3
 ---

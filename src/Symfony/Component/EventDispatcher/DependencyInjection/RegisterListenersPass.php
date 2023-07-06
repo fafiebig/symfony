@@ -48,10 +48,7 @@ class RegisterListenersPass implements CompilerPassInterface
         return $this;
     }
 
-    /**
-     * @return void
-     */
-    public function process(ContainerBuilder $container)
+    public function process(ContainerBuilder $container): void
     {
         if (!$container->hasDefinition('event_dispatcher') && !$container->hasAlias('event_dispatcher')) {
             return;
@@ -91,7 +88,7 @@ class RegisterListenersPass implements CompilerPassInterface
 
                     if (null !== ($class = $container->getDefinition($id)->getClass()) && ($r = $container->getReflectionClass($class, false)) && !$r->hasMethod($event['method'])) {
                         if (!$r->hasMethod('__invoke')) {
-                            throw new InvalidArgumentException(sprintf('None of the "%s" or "__invoke" methods exist for the service "foo". Please define the "method" attribute on "kernel.event_listener" tags.', $event['method'], $id));
+                            throw new InvalidArgumentException(sprintf('None of the "%s" or "__invoke" methods exist for the service "%s". Please define the "method" attribute on "kernel.event_listener" tags.', $event['method'], $id));
                         }
 
                         $event['method'] = '__invoke';

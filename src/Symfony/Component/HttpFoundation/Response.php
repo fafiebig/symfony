@@ -331,18 +331,15 @@ class Response
     /**
      * Sends HTTP headers.
      *
-     * @param null|positive-int $statusCode The status code to use, override the statusCode property if set and not null
-     *
      * @return $this
      */
-    public function sendHeaders(/* int $statusCode = null */): static
+    public function sendHeaders(int $statusCode = null): static
     {
         // headers have already been sent by the developer
         if (headers_sent()) {
             return $this;
         }
 
-        $statusCode = \func_num_args() > 0 ? func_get_arg(0) : null;
         $informationalResponse = $statusCode >= 100 && $statusCode < 200;
         if ($informationalResponse && !\function_exists('headers_send')) {
             // skip informational responses if not supported by the SAPI
@@ -372,7 +369,7 @@ class Response
                 $newValues = null === $previousValues ? $values : array_diff($values, $previousValues);
             }
 
-            foreach ($newValues  as $value) {
+            foreach ($newValues as $value) {
                 header($name.': '.$value, $replace, $this->statusCode);
             }
 

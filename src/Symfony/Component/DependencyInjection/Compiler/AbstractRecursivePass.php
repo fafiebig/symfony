@@ -51,10 +51,7 @@ abstract class AbstractRecursivePass implements CompilerPassInterface
         }
     }
 
-    /**
-     * @return void
-     */
-    protected function enableExpressionProcessing()
+    protected function enableExpressionProcessing(): void
     {
         $this->processExpressions = true;
     }

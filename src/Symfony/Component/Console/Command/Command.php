@@ -107,18 +107,13 @@ class Command
      * Ignores validation errors.
      *
      * This is mainly useful for the help command.
-     *
-     * @return void
      */
-    public function ignoreValidationErrors()
+    public function ignoreValidationErrors(): void
     {
         $this->ignoreValidationErrors = true;
     }
 
-    /**
-     * @return void
-     */
-    public function setApplication(?Application $application)
+    public function setApplication(?Application $application): void
     {
         $this->application = $application;
         if ($application) {
@@ -130,10 +125,7 @@ class Command
         $this->fullDefinition = null;
     }
 
-    /**
-     * @return void
-     */
-    public function setHelperSet(HelperSet $helperSet)
+    public function setHelperSet(HelperSet $helperSet): void
     {
         $this->helperSet = $helperSet;
     }
@@ -159,10 +151,8 @@ class Command
      *
      * Override this to check for x or y and return false if the command cannot
      * run properly under the current conditions.
-     *
-     * @return bool
      */
-    public function isEnabled()
+    public function isEnabled(): bool
     {
         return true;
     }
@@ -190,7 +180,7 @@ class Command
      *
      * @see setCode()
      */
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         throw new LogicException('You must override the execute() method in the concrete command class.');
     }
@@ -650,12 +640,10 @@ class Command
     /**
      * Gets a helper instance by name.
      *
-     * @return HelperInterface
-     *
      * @throws LogicException           if no HelperSet is defined
      * @throws InvalidArgumentException if the helper is not defined
      */
-    public function getHelper(string $name): mixed
+    public function getHelper(string $name): HelperInterface
     {
         if (null === $this->helperSet) {
             throw new LogicException(sprintf('Cannot retrieve helper "%s" because there is no HelperSet defined. Did you forget to add your command to the application or to set the application on the command using the setApplication() method? You can also set the HelperSet directly using the setHelperSet() method.', $name));

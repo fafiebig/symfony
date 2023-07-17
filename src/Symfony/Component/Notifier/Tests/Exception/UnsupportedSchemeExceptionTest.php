@@ -29,6 +29,7 @@ final class UnsupportedSchemeExceptionTest extends TestCase
             Bridge\AllMySms\AllMySmsTransportFactory::class => false,
             Bridge\AmazonSns\AmazonSnsTransportFactory::class => false,
             Bridge\Bandwidth\BandwidthTransportFactory::class => false,
+            Bridge\Brevo\BrevoTransportFactory::class => false,
             Bridge\Chatwork\ChatworkTransportFactory::class => false,
             Bridge\Clickatell\ClickatellTransportFactory::class => false,
             Bridge\ClickSend\ClickSendTransportFactory::class => false,
@@ -73,7 +74,6 @@ final class UnsupportedSchemeExceptionTest extends TestCase
             Bridge\Redlink\RedlinkTransportFactory::class => false,
             Bridge\RocketChat\RocketChatTransportFactory::class => false,
             Bridge\Sendberry\SendberryTransportFactory::class => false,
-            Bridge\Sendinblue\SendinblueTransportFactory::class => false,
             Bridge\SimpleTextin\SimpleTextinTransportFactory::class => false,
             Bridge\Sinch\SinchTransportFactory::class => false,
             Bridge\Slack\SlackTransportFactory::class => false,
@@ -115,6 +115,7 @@ final class UnsupportedSchemeExceptionTest extends TestCase
         yield ['allmysms', 'symfony/all-my-sms-notifier'];
         yield ['sns', 'symfony/amazon-sns-notifier'];
         yield ['bandwidth', 'symfony/bandwidth-notifier'];
+        yield ['brevo', 'symfony/brevo-notifier'];
         yield ['clickatell', 'symfony/clickatell-notifier'];
         yield ['clicksend', 'symfony/click-send-notifier'];
         yield ['contact-everyone', 'symfony/contact-everyone-notifier'];
@@ -151,7 +152,6 @@ final class UnsupportedSchemeExceptionTest extends TestCase
         yield ['ringcentral', 'symfony/ring-central-notifier'];
         yield ['rocketchat', 'symfony/rocket-chat-notifier'];
         yield ['sendberry', 'symfony/sendberry-notifier'];
-        yield ['sendinblue', 'symfony/sendinblue-notifier'];
         yield ['simpletextin', 'symfony/simple-textin-notifier'];
         yield ['sinch', 'symfony/sinch-notifier'];
         yield ['slack', 'symfony/slack-notifier'];

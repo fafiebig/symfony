@@ -28,6 +28,10 @@ class UnsupportedSchemeException extends LogicException
             'class' => Bridge\Bandwidth\BandwidthTransportFactory::class,
             'package' => 'symfony/bandwidth-notifier',
         ],
+        'brevo' => [
+            'class' => Bridge\Brevo\BrevoTransportFactory::class,
+            'package' => 'symfony/brevo-notifier',
+        ],
         'chatwork' => [
             'class' => Bridge\Chatwork\ChatworkTransportFactory::class,
             'package' => 'symfony/chatwork-notifier',
@@ -203,10 +207,6 @@ class UnsupportedSchemeException extends LogicException
         'sendberry' => [
             'class' => Bridge\Sendberry\SendberryTransportFactory::class,
             'package' => 'symfony/sendberry-notifier',
-        ],
-        'sendinblue' => [
-            'class' => Bridge\Sendinblue\SendinblueTransportFactory::class,
-            'package' => 'symfony/sendinblue-notifier',
         ],
         'simpletextin' => [
             'class' => Bridge\SimpleTextin\SimpleTextinTransportFactory::class,

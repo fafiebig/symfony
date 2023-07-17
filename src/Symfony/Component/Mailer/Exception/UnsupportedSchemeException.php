@@ -20,6 +20,10 @@ use Symfony\Component\Mailer\Transport\Dsn;
 class UnsupportedSchemeException extends LogicException
 {
     private const SCHEME_TO_PACKAGE_MAP = [
+        'brevo' => [
+            'class' => Bridge\Brevo\Transport\BrevoTransportFactory::class,
+            'package' => 'symfony/brevo-mailer',
+        ],
         'gmail' => [
             'class' => Bridge\Google\Transport\GmailTransportFactory::class,
             'package' => 'symfony/google-mailer',
@@ -51,10 +55,6 @@ class UnsupportedSchemeException extends LogicException
         'sendgrid' => [
             'class' => Bridge\Sendgrid\Transport\SendgridTransportFactory::class,
             'package' => 'symfony/sendgrid-mailer',
-        ],
-        'sendinblue' => [
-            'class' => Bridge\Sendinblue\Transport\SendinblueTransportFactory::class,
-            'package' => 'symfony/sendinblue-mailer',
         ],
         'ses' => [
             'class' => Bridge\Amazon\Transport\SesTransportFactory::class,

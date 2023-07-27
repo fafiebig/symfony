@@ -915,12 +915,10 @@ EOF;
                 if (!$definition->isShared()) {
                     $code .= sprintf('        %s ??= ', $factory);
 
-                    if ($asFile) {
-                        $code .= "self::do(...);\n\n";
-                    } elseif ($definition->isPublic()) {
-                        $code .= sprintf("fn () => self::%s(\$container);\n\n", $methodName);
+                    if ($definition->isPublic()) {
+                        $code .= sprintf("fn () => self::%s(\$container);\n\n", $asFile ? 'do' : $methodName);
                     } else {
-                        $code .= sprintf("self::%s(...);\n\n", $methodName);
+                        $code .= sprintf("self::%s(...);\n\n", $asFile ? 'do' : $methodName);
                     }
                 }
                 $lazyLoad = $asGhostObject ? '$proxy' : 'false';
@@ -1628,7 +1626,7 @@ EOF;
 
     public function getParameterBag(): ParameterBagInterface
     {
-        if (null === $this->parameterBag) {
+        if (!isset($this->parameterBag)) {
             $parameters = $this->parameters;
             foreach ($this->loadedDynamicParameters as $name => $loaded) {
                 $parameters[$name] = $loaded ? $this->dynamicParameters[$name] : $this->getDynamicParameter($name);

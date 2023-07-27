@@ -15,8 +15,6 @@ use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\Exception\InvalidArgumentException;
 
 /**
- * @Annotation
- *
  * @author Colin O'Dell <colinodell@gmail.com>
  * @author Bernhard Schussek <bschussek@gmail.com>
  */
@@ -92,6 +90,7 @@ class Uuid extends Constraint
      */
     public $versions = self::ALL_VERSIONS;
 
+    /** @var callable|null */
     public $normalizer;
 
     /**

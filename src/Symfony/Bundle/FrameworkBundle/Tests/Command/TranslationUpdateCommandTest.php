@@ -26,8 +26,8 @@ use Symfony\Component\Translation\Writer\TranslationWriter;
 
 class TranslationUpdateCommandTest extends TestCase
 {
-    private $fs;
-    private $translationDir;
+    private Filesystem $fs;
+    private string $translationDir;
 
     public function testDumpMessagesAndClean()
     {
@@ -160,7 +160,6 @@ class TranslationUpdateCommandTest extends TestCase
         $command = $this->createMock(TranslationUpdateCommand::class);
 
         $method = new \ReflectionMethod(TranslationUpdateCommand::class, 'filterDuplicateTransPaths');
-        $method->setAccessible(true);
 
         $filteredTransPaths = $method->invoke($command, $transPaths);
 

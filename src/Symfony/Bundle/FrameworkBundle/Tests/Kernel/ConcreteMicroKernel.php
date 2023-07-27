@@ -27,7 +27,7 @@ class ConcreteMicroKernel extends Kernel implements EventSubscriberInterface
 {
     use MicroKernelTrait;
 
-    private $cacheDir;
+    private string $cacheDir;
 
     public function onKernelException(ExceptionEvent $event)
     {
@@ -83,6 +83,7 @@ class ConcreteMicroKernel extends Kernel implements EventSubscriberInterface
     {
         $c->register('logger', NullLogger::class);
         $c->loadFromExtension('framework', [
+            'annotations' => false,
             'http_method_override' => false,
             'secret' => '$ecret',
             'router' => ['utf8' => true],

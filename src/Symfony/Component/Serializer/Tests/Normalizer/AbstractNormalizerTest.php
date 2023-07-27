@@ -27,7 +27,7 @@ use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 use Symfony\Component\Serializer\Normalizer\PropertyNormalizer;
 use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\Serializer\Tests\Fixtures\AbstractNormalizerDummy;
-use Symfony\Component\Serializer\Tests\Fixtures\Annotations\IgnoreDummy;
+use Symfony\Component\Serializer\Tests\Fixtures\Attributes\IgnoreDummy;
 use Symfony\Component\Serializer\Tests\Fixtures\Dummy;
 use Symfony\Component\Serializer\Tests\Fixtures\NullableConstructorArgumentDummy;
 use Symfony\Component\Serializer\Tests\Fixtures\NullableOptionalConstructorArgumentDummy;
@@ -42,15 +42,8 @@ use Symfony\Component\Serializer\Tests\Fixtures\VariadicConstructorTypedArgsDumm
  */
 class AbstractNormalizerTest extends TestCase
 {
-    /**
-     * @var AbstractNormalizerDummy
-     */
-    private $normalizer;
-
-    /**
-     * @var MockObject&ClassMetadataFactoryInterface
-     */
-    private $classMetadata;
+    private AbstractNormalizerDummy $normalizer;
+    private MockObject&ClassMetadataFactoryInterface $classMetadata;
 
     protected function setUp(): void
     {

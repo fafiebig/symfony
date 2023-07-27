@@ -11,12 +11,9 @@
 
 namespace Symfony\Component\Validator\Tests;
 
-use Doctrine\Common\Annotations\PsrCachedReader;
-use Doctrine\Common\Annotations\Reader;
 use PHPUnit\Framework\TestCase;
 use Psr\Cache\CacheItemPoolInterface;
 use Symfony\Component\Validator\ConstraintValidatorFactoryInterface;
-use Symfony\Component\Validator\Mapping\Loader\AnnotationLoader;
 use Symfony\Component\Validator\ObjectInitializerInterface;
 use Symfony\Component\Validator\Validator\RecursiveValidator;
 use Symfony\Component\Validator\ValidatorBuilder;
@@ -24,19 +21,11 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 class ValidatorBuilderTest extends TestCase
 {
-    /**
-     * @var ValidatorBuilder
-     */
-    protected $builder;
+    private ValidatorBuilder $builder;
 
     protected function setUp(): void
     {
         $this->builder = new ValidatorBuilder();
-    }
-
-    protected function tearDown(): void
-    {
-        $this->builder = null;
     }
 
     public function testAddObjectInitializer()
@@ -79,36 +68,6 @@ class ValidatorBuilderTest extends TestCase
     public function testAddMethodMappings()
     {
         $this->assertSame($this->builder, $this->builder->addMethodMappings([]));
-    }
-
-    public function testEnableAnnotationMappingWithDefaultDoctrineAnnotationReader()
-    {
-        $this->assertSame($this->builder, $this->builder->enableAnnotationMapping());
-        $this->assertSame($this->builder, $this->builder->addDefaultDoctrineAnnotationReader());
-
-        $loaders = $this->builder->getLoaders();
-        $this->assertCount(1, $loaders);
-        $this->assertInstanceOf(AnnotationLoader::class, $loaders[0]);
-
-        $r = new \ReflectionProperty(AnnotationLoader::class, 'reader');
-
-        $this->assertInstanceOf(PsrCachedReader::class, $r->getValue($loaders[0]));
-    }
-
-    public function testEnableAnnotationMappingWithCustomDoctrineAnnotationReader()
-    {
-        $reader = $this->createMock(Reader::class);
-
-        $this->assertSame($this->builder, $this->builder->enableAnnotationMapping());
-        $this->assertSame($this->builder, $this->builder->setDoctrineAnnotationReader($reader));
-
-        $loaders = $this->builder->getLoaders();
-        $this->assertCount(1, $loaders);
-        $this->assertInstanceOf(AnnotationLoader::class, $loaders[0]);
-
-        $r = new \ReflectionProperty(AnnotationLoader::class, 'reader');
-
-        $this->assertSame($reader, $r->getValue($loaders[0]));
     }
 
     public function testDisableAnnotationMapping()

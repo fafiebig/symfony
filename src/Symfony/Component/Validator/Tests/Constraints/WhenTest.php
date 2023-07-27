@@ -11,7 +11,6 @@
 
 namespace Symfony\Component\Validator\Tests\Constraints;
 
-use Doctrine\Common\Annotations\AnnotationReader;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Validator\Constraints\Callback;
 use Symfony\Component\Validator\Constraints\NotBlank;
@@ -42,81 +41,9 @@ final class WhenTest extends TestCase
         ]);
     }
 
-    public function testAnnotations()
-    {
-        $loader = new AnnotationLoader(new AnnotationReader());
-        $metadata = new ClassMetadata(WhenTestWithAnnotations::class);
-
-        self::assertTrue($loader->loadClassMetadata($metadata));
-
-        [$classConstraint] = $metadata->getConstraints();
-
-        self::assertInstanceOf(When::class, $classConstraint);
-        self::assertSame('true', $classConstraint->expression);
-        self::assertEquals([
-            new Callback([
-                'callback' => 'callback',
-                'groups' => ['Default', 'WhenTestWithAnnotations'],
-            ]),
-        ], $classConstraint->constraints);
-
-        [$fooConstraint] = $metadata->properties['foo']->getConstraints();
-
-        self::assertInstanceOf(When::class, $fooConstraint);
-        self::assertSame('true', $fooConstraint->expression);
-        self::assertEquals([
-            new NotNull([
-                'groups' => ['Default', 'WhenTestWithAnnotations'],
-            ]),
-            new NotBlank([
-                'groups' => ['Default', 'WhenTestWithAnnotations'],
-            ]),
-        ], $fooConstraint->constraints);
-        self::assertSame(['Default', 'WhenTestWithAnnotations'], $fooConstraint->groups);
-
-        [$barConstraint] = $metadata->properties['bar']->getConstraints();
-
-        self::assertInstanceOf(When::class, $fooConstraint);
-        self::assertSame('false', $barConstraint->expression);
-        self::assertEquals([
-            new NotNull([
-                'groups' => ['foo'],
-            ]),
-            new NotBlank([
-                'groups' => ['foo'],
-            ]),
-        ], $barConstraint->constraints);
-        self::assertSame(['foo'], $barConstraint->groups);
-
-        [$quxConstraint] = $metadata->properties['qux']->getConstraints();
-
-        self::assertInstanceOf(When::class, $quxConstraint);
-        self::assertSame('true', $quxConstraint->expression);
-        self::assertEquals([
-            new NotNull([
-                'groups' => ['foo'],
-            ]),
-        ], $quxConstraint->constraints);
-        self::assertSame(['foo'], $quxConstraint->groups);
-
-        [$bazConstraint] = $metadata->getters['baz']->getConstraints();
-
-        self::assertInstanceOf(When::class, $bazConstraint);
-        self::assertSame('true', $bazConstraint->expression);
-        self::assertEquals([
-            new NotNull([
-                'groups' => ['Default', 'WhenTestWithAnnotations'],
-            ]),
-            new NotBlank([
-                'groups' => ['Default', 'WhenTestWithAnnotations'],
-            ]),
-        ], $bazConstraint->constraints);
-        self::assertSame(['Default', 'WhenTestWithAnnotations'], $bazConstraint->groups);
-    }
-
     public function testAttributes()
     {
-        $loader = new AnnotationLoader(new AnnotationReader());
+        $loader = new AnnotationLoader();
         $metadata = new ClassMetadata(WhenTestWithAttributes::class);
 
         self::assertTrue($loader->loadClassMetadata($metadata));
@@ -184,38 +111,5 @@ final class WhenTest extends TestCase
             ]),
         ], $bazConstraint->constraints);
         self::assertSame(['Default', 'WhenTestWithAttributes'], $bazConstraint->groups);
-    }
-}
-
-/**
- * @When(expression="true", constraints={@Callback("callback")})
- */
-class WhenTestWithAnnotations
-{
-    /**
-     * @When(expression="true", constraints={@NotNull, @NotBlank})
-     */
-    private $foo;
-
-    /**
-     * @When(expression="false", constraints={@NotNull, @NotBlank}, groups={"foo"})
-     */
-    private $bar;
-
-    /**
-     * @When(expression="true", constraints=@NotNull, groups={"foo"})
-     */
-    private $qux;
-
-    /**
-     * @When(expression="true", constraints={@NotNull, @NotBlank})
-     */
-    public function getBaz()
-    {
-        return null;
-    }
-
-    public function callback()
-    {
     }
 }

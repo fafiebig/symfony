@@ -11,7 +11,6 @@
 
 namespace Symfony\Component\Serializer\Mapping\Loader;
 
-use Doctrine\Common\Annotations\Reader;
 use Symfony\Component\Serializer\Annotation\Context;
 use Symfony\Component\Serializer\Annotation\DiscriminatorMap;
 use Symfony\Component\Serializer\Annotation\Groups;
@@ -42,11 +41,6 @@ class AnnotationLoader implements LoaderInterface
         SerializedPath::class,
         Context::class,
     ];
-
-    public function __construct(
-        private readonly ?Reader $reader = null,
-    ) {
-    }
 
     public function loadClassMetadata(ClassMetadataInterface $classMetadata): bool
     {
@@ -163,10 +157,7 @@ class AnnotationLoader implements LoaderInterface
         return $loaded;
     }
 
-    /**
-     * @param \ReflectionClass|\ReflectionMethod|\ReflectionProperty $reflector
-     */
-    public function loadAnnotations(object $reflector): iterable
+    public function loadAnnotations(\ReflectionMethod|\ReflectionClass|\ReflectionProperty $reflector): iterable
     {
         foreach ($reflector->getAttributes() as $attribute) {
             if ($this->isKnownAttribute($attribute->getName())) {
@@ -186,20 +177,6 @@ class AnnotationLoader implements LoaderInterface
                     throw new MappingException(sprintf('Could not instantiate attribute "%s"%s.', $attribute->getName(), $on), 0, $e);
                 }
             }
-        }
-
-        if (null === $this->reader) {
-            return;
-        }
-
-        if ($reflector instanceof \ReflectionClass) {
-            yield from $this->reader->getClassAnnotations($reflector);
-        }
-        if ($reflector instanceof \ReflectionMethod) {
-            yield from $this->reader->getMethodAnnotations($reflector);
-        }
-        if ($reflector instanceof \ReflectionProperty) {
-            yield from $this->reader->getPropertyAnnotations($reflector);
         }
     }
 

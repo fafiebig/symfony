@@ -99,6 +99,8 @@ Form
    `model_timezone` option in `DateType`, `DateTimeType`, and `TimeType`
  * Make the "widget" option of date/time form types default to "single_text"
  * Require explicit argument when calling `Button/Form::setParent()`, `ButtonBuilder/FormConfigBuilder::setDataMapper()`, `TransformationFailedException::setInvalidMessage()`
+ * `PostSetDataEvent::setData()` throws an exception, use `PreSetDataEvent::setData()` instead
+ * `PostSubmitEvent::setData()` throws an exception, use `PreSubmitDataEvent::setData()` or `SubmitDataEvent::setData()` instead
 
 FrameworkBundle
 ---------------
@@ -120,6 +122,8 @@ FrameworkBundle
    ```php
    $this->render(..., ['form' => $form]);
    ```
+
+ * Remove the integration of Doctrine annotations, use native attributes instead
 
 HttpFoundation
 --------------
@@ -168,8 +172,8 @@ Messenger
 
  * Add parameter `$isSameDatabase` to `DoctrineTransport::configureSchema()`
  * Remove `MessageHandlerInterface` and `MessageSubscriberInterface`, use `#[AsMessageHandler]` instead
- * Remove `StopWorkerOnSigtermSignalListener` in favor of
-   `StopWorkerOnSignalsListener` and make it configurable with SIGINT and
+ * Remove `StopWorkerOnSigtermSignalListener` in favor of using the `SignalableCommandInterface`
+ * Remove `StopWorkerOnSignalsListener` in favor of using the `SignalableCommandInterface`
  * Remove `Symfony\Component\Messenger\Transport\InMemoryTransport` and
    `Symfony\Component\Messenger\Transport\InMemoryTransportFactory` in favor of
    `Symfony\Component\Messenger\Transport\InMemory\InMemoryTransport` and
@@ -196,6 +200,8 @@ Routing
 -------
 
  * Add argument `$routeParameters` to `UrlMatcher::handleRouteRequirements()`
+ * Remove Doctrine annotations support in favor of native attributes
+ * Change the constructor signature of `AnnotationClassLoader` to `__construct(?string $env = null)`, passing an annotation reader as first argument is not supported anymore
 
 Security
 --------
@@ -288,6 +294,8 @@ Serializer
 
  * Require explicit argument when calling `AttributeMetadata::setSerializedName()` and `ClassMetadata::setClassDiscriminatorMapping()`
  * Add argument `$context` to `NormalizerInterface::supportsNormalization()` and `DenormalizerInterface::supportsDenormalization()`
+ * Remove Doctrine annotations support in favor of native attributes
+ * Remove the annotation reader parameter from the constructor of `AnnotationLoader`
 
 Translation
 -----------
@@ -310,8 +318,13 @@ Validator
  * Add method `__toString()` to `ConstraintViolationListInterface`
  * Add method `disableTranslation()` to `ConstraintViolationBuilderInterface`
  * Remove static property `$errorNames` from all constraints, use const `ERROR_NAMES` instead
+ * Remove static property `$versions` from the `Ip` constraint, use the `VERSIONS` constant instead
  * Remove `VALIDATION_MODE_LOOSE` from `Email` constraint, use `VALIDATION_MODE_HTML5` instead
  * Remove constraint `ExpressionLanguageSyntax`, use `ExpressionSyntax` instead
+ * Remove Doctrine annotations support in favor of native attributes
+ * Remove the annotation reader parameter from the constructor signature of `AnnotationLoader`
+ * Remove `ValidatorBuilder::setDoctrineAnnotationReader()`
+ * Remove `ValidatorBuilder::addDefaultDoctrineAnnotationReader()`
 
 VarDumper
 ---------

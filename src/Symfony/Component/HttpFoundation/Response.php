@@ -286,7 +286,7 @@ class Response
             $charset = $this->charset ?: 'UTF-8';
             if (!$headers->has('Content-Type')) {
                 $headers->set('Content-Type', 'text/html; charset='.$charset);
-            } elseif (0 === stripos($headers->get('Content-Type'), 'text/') && false === stripos($headers->get('Content-Type'), 'charset')) {
+            } elseif (0 === stripos($headers->get('Content-Type') ?? '', 'text/') && false === stripos($headers->get('Content-Type') ?? '', 'charset')) {
                 // add the charset
                 $headers->set('Content-Type', $headers->get('Content-Type').'; charset='.$charset);
             }
@@ -496,12 +496,6 @@ class Response
 
         if (null === $text) {
             $this->statusText = self::$statusTexts[$code] ?? 'unknown status';
-
-            return $this;
-        }
-
-        if (false === $text) {
-            $this->statusText = '';
 
             return $this;
         }

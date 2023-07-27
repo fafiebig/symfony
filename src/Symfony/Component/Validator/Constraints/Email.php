@@ -17,9 +17,6 @@ use Symfony\Component\Validator\Exception\InvalidArgumentException;
 use Symfony\Component\Validator\Exception\LogicException;
 
 /**
- * @Annotation
- * @Target({"PROPERTY", "METHOD", "ANNOTATION"})
- *
  * @author Bernhard Schussek <bschussek@gmail.com>
  */
 #[\Attribute(\Attribute::TARGET_PROPERTY | \Attribute::TARGET_METHOD | \Attribute::IS_REPEATABLE)]
@@ -43,6 +40,7 @@ class Email extends Constraint
 
     public $message = 'This value is not a valid email address.';
     public $mode;
+    /** @var callable|null */
     public $normalizer;
 
     public function __construct(

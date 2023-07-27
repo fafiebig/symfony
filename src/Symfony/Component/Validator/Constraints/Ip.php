@@ -18,9 +18,6 @@ use Symfony\Component\Validator\Exception\InvalidArgumentException;
 /**
  * Validates that a value is a valid IP address.
  *
- * @Annotation
- * @Target({"PROPERTY", "METHOD", "ANNOTATION"})
- *
  * @author Bernhard Schussek <bschussek@gmail.com>
  * @author Joseph Bielawski <stloyd@gmail.com>
  */
@@ -74,6 +71,7 @@ class Ip extends Constraint
 
     public $message = 'This is not a valid IP address.';
 
+    /** @var callable|null */
     public $normalizer;
 
     public function __construct(

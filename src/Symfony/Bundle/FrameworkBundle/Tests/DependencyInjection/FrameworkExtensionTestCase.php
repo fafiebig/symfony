@@ -11,9 +11,9 @@
 
 namespace Symfony\Bundle\FrameworkBundle\Tests\DependencyInjection;
 
-use Doctrine\Common\Annotations\Annotation;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Log\LoggerAwareInterface;
+use Symfony\Bridge\PhpUnit\ExpectDeprecationTrait;
 use Symfony\Bundle\FrameworkBundle\DependencyInjection\Compiler\AddAnnotationsCachedReaderPass;
 use Symfony\Bundle\FrameworkBundle\DependencyInjection\FrameworkExtension;
 use Symfony\Bundle\FrameworkBundle\FrameworkBundle;
@@ -35,7 +35,6 @@ use Symfony\Component\DependencyInjection\Argument\ServiceClosureArgument;
 use Symfony\Component\DependencyInjection\Argument\ServiceLocatorArgument;
 use Symfony\Component\DependencyInjection\Argument\TaggedIteratorArgument;
 use Symfony\Component\DependencyInjection\ChildDefinition;
-use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\Compiler\ResolveInstanceofConditionalsPass;
 use Symfony\Component\DependencyInjection\Compiler\ResolveTaggedIteratorArgumentPass;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -81,6 +80,7 @@ use Symfony\Component\Translation\LocaleSwitcher;
 use Symfony\Component\Validator\DependencyInjection\AddConstraintValidatorsPass;
 use Symfony\Component\Validator\Validation;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Symfony\Component\Validator\ValidatorBuilder;
 use Symfony\Component\Webhook\Client\RequestParser;
 use Symfony\Component\Webhook\Controller\WebhookController;
 use Symfony\Component\Workflow;
@@ -92,7 +92,9 @@ use Symfony\Contracts\Cache\TagAwareCacheInterface;
 
 abstract class FrameworkExtensionTestCase extends TestCase
 {
-    private static $containerCache = [];
+    use ExpectDeprecationTrait;
+
+    private static array $containerCache = [];
 
     abstract protected function loadFromFile(ContainerBuilder $container, $file);
 
@@ -1193,9 +1195,9 @@ abstract class FrameworkExtensionTestCase extends TestCase
 
         $calls = $container->getDefinition('validator.builder')->getMethodCalls();
 
-        $annotations = !class_exists(FullStack::class) && class_exists(Annotation::class);
+        $annotations = !class_exists(FullStack::class);
 
-        $this->assertCount($annotations ? 8 : 6, $calls);
+        $this->assertCount($annotations ? 7 : 6, $calls);
         $this->assertSame('setConstraintValidatorFactory', $calls[0][0]);
         $this->assertEquals([new Reference('validator.validator_factory')], $calls[0][1]);
         $this->assertSame('setTranslator', $calls[1][0]);
@@ -1207,7 +1209,6 @@ abstract class FrameworkExtensionTestCase extends TestCase
         $i = 3;
         if ($annotations) {
             $this->assertSame('enableAnnotationMapping', $calls[++$i][0]);
-            $this->assertSame('setDoctrineAnnotationReader', $calls[++$i][0]);
         }
         $this->assertSame('addMethodMapping', $calls[++$i][0]);
         $this->assertSame(['loadValidatorMetadata'], $calls[$i][1]);
@@ -1224,12 +1225,14 @@ abstract class FrameworkExtensionTestCase extends TestCase
 
     public function testAnnotations()
     {
-        $container = $this->createContainerFromFile('full', [], true, false);
-        $container->addCompilerPass(new TestAnnotationsPass());
-        $container->compile();
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage('Invalid configuration for path "framework.annotations": Enabling the doctrine/annotations integration is not supported anymore.');
 
-        $this->assertEquals($container->getParameter('kernel.cache_dir').'/annotations', $container->getDefinition('annotations.filesystem_cache_adapter')->getArgument(2));
-        $this->assertSame('annotations.filesystem_cache_adapter', (string) $container->getDefinition('annotation_reader')->getArgument(1));
+        $this->createContainerFromClosure(function (ContainerBuilder $container) {
+            $container->loadFromExtension('framework', [
+                'annotations' => true,
+            ]);
+        });
     }
 
     public function testFileLinkFormat()
@@ -1249,14 +1252,12 @@ abstract class FrameworkExtensionTestCase extends TestCase
 
         $calls = $container->getDefinition('validator.builder')->getMethodCalls();
 
-        $this->assertCount(8, $calls);
+        $this->assertCount(7, $calls);
         $this->assertSame('enableAnnotationMapping', $calls[4][0]);
-        $this->assertSame('setDoctrineAnnotationReader', $calls[5][0]);
-        $this->assertEquals([new Reference('annotation_reader')], $calls[5][1]);
-        $this->assertSame('addMethodMapping', $calls[6][0]);
-        $this->assertSame(['loadValidatorMetadata'], $calls[6][1]);
-        $this->assertSame('setMappingCache', $calls[7][0]);
-        $this->assertEquals([new Reference('validator.mapping.cache.adapter')], $calls[7][1]);
+        $this->assertSame('addMethodMapping', $calls[5][0]);
+        $this->assertSame(['loadValidatorMetadata'], $calls[5][1]);
+        $this->assertSame('setMappingCache', $calls[6][0]);
+        $this->assertEquals([new Reference('validator.mapping.cache.adapter')], $calls[6][1]);
         // no cache this time
     }
 
@@ -1271,15 +1272,14 @@ abstract class FrameworkExtensionTestCase extends TestCase
 
         $calls = $container->getDefinition('validator.builder')->getMethodCalls();
 
-        $this->assertCount(9, $calls);
+        $this->assertCount(8, $calls);
         $this->assertSame('addXmlMappings', $calls[3][0]);
         $this->assertSame('addYamlMappings', $calls[4][0]);
         $this->assertSame('enableAnnotationMapping', $calls[5][0]);
-        $this->assertSame('setDoctrineAnnotationReader', $calls[6][0]);
-        $this->assertSame('addMethodMapping', $calls[7][0]);
-        $this->assertSame(['loadValidatorMetadata'], $calls[7][1]);
-        $this->assertSame('setMappingCache', $calls[8][0]);
-        $this->assertEquals([new Reference('validator.mapping.cache.adapter')], $calls[8][1]);
+        $this->assertSame('addMethodMapping', $calls[6][0]);
+        $this->assertSame(['loadValidatorMetadata'], $calls[6][1]);
+        $this->assertSame('setMappingCache', $calls[7][0]);
+        $this->assertEquals([new Reference('validator.mapping.cache.adapter')], $calls[7][1]);
 
         $xmlMappings = $calls[3][1][0];
         $this->assertCount(3, $xmlMappings);
@@ -1330,14 +1330,13 @@ abstract class FrameworkExtensionTestCase extends TestCase
 
         $calls = $container->getDefinition('validator.builder')->getMethodCalls();
 
-        $annotations = !class_exists(FullStack::class) && class_exists(Annotation::class);
+        $annotations = !class_exists(FullStack::class);
 
-        $this->assertCount($annotations ? 7 : 5, $calls);
+        $this->assertCount($annotations ? 6 : 5, $calls);
         $this->assertSame('addXmlMappings', $calls[3][0]);
         $i = 3;
         if ($annotations) {
             $this->assertSame('enableAnnotationMapping', $calls[++$i][0]);
-            $this->assertSame('setDoctrineAnnotationReader', $calls[++$i][0]);
         }
         $this->assertSame('setMappingCache', $calls[++$i][0]);
         $this->assertEquals([new Reference('validator.mapping.cache.adapter')], $calls[$i][1]);
@@ -1549,11 +1548,10 @@ abstract class FrameworkExtensionTestCase extends TestCase
 
     public function testSerializerMapping()
     {
-        $container = $this->createContainerFromFile('serializer_mapping', ['kernel.bundles_metadata' => ['TestBundle' => ['namespace' => 'Symfony\\Bundle\\FrameworkBundle\\Tests', 'path' => __DIR__.'/Fixtures/TestBundle']]]);
+        $container = $this->createContainerFromFile('serializer_mapping_without_annotations', ['kernel.bundles_metadata' => ['TestBundle' => ['namespace' => 'Symfony\\Bundle\\FrameworkBundle\\Tests', 'path' => __DIR__.'/Fixtures/TestBundle']]]);
         $projectDir = $container->getParameter('kernel.project_dir');
         $configDir = __DIR__.'/Fixtures/TestBundle/Resources/config';
         $expectedLoaders = [
-            new Definition(AnnotationLoader::class, [new Reference('annotation_reader', ContainerInterface::NULL_ON_INVALID_REFERENCE)]),
             new Definition(XmlFileLoader::class, [$configDir.'/serialization.xml']),
             new Definition(YamlFileLoader::class, [$configDir.'/serialization.yml']),
             new Definition(YamlFileLoader::class, [$projectDir.'/config/serializer/foo.yml']),
@@ -1806,11 +1804,11 @@ abstract class FrameworkExtensionTestCase extends TestCase
     public function testRemovesResourceCheckerConfigCacheFactoryArgumentOnlyIfNoDebug()
     {
         $container = $this->createContainer(['kernel.debug' => true]);
-        (new FrameworkExtension())->load([['http_method_override' => false]], $container);
+        (new FrameworkExtension())->load([['annotations' => false, 'http_method_override' => false]], $container);
         $this->assertCount(1, $container->getDefinition('config_cache_factory')->getArguments());
 
         $container = $this->createContainer(['kernel.debug' => false]);
-        (new FrameworkExtension())->load([['http_method_override' => false]], $container);
+        (new FrameworkExtension())->load([['annotations' => false, 'http_method_override' => false]], $container);
         $this->assertEmpty($container->getDefinition('config_cache_factory')->getArguments());
     }
 
@@ -1841,21 +1839,21 @@ abstract class FrameworkExtensionTestCase extends TestCase
     public function testRobotsTagListenerIsRegisteredInDebugMode()
     {
         $container = $this->createContainer(['kernel.debug' => true]);
-        (new FrameworkExtension())->load([['http_method_override' => false]], $container);
+        (new FrameworkExtension())->load([['annotations' => false, 'http_method_override' => false]], $container);
         $this->assertTrue($container->has('disallow_search_engine_index_response_listener'), 'DisallowRobotsIndexingListener should be registered');
 
         $definition = $container->getDefinition('disallow_search_engine_index_response_listener');
         $this->assertTrue($definition->hasTag('kernel.event_subscriber'), 'DisallowRobotsIndexingListener should have the correct tag');
 
         $container = $this->createContainer(['kernel.debug' => true]);
-        (new FrameworkExtension())->load([['http_method_override' => false, 'disallow_search_engine_index' => false]], $container);
+        (new FrameworkExtension())->load([['annotations' => false, 'http_method_override' => false, 'disallow_search_engine_index' => false]], $container);
         $this->assertFalse(
             $container->has('disallow_search_engine_index_response_listener'),
             'DisallowRobotsIndexingListener should not be registered when explicitly disabled'
         );
 
         $container = $this->createContainer(['kernel.debug' => false]);
-        (new FrameworkExtension())->load([['http_method_override' => false]], $container);
+        (new FrameworkExtension())->load([['annotations' => false, 'http_method_override' => false]], $container);
         $this->assertFalse($container->has('disallow_search_engine_index_response_listener'), 'DisallowRobotsIndexingListener should NOT be registered');
     }
 
@@ -2294,7 +2292,7 @@ abstract class FrameworkExtensionTestCase extends TestCase
         ], $data)));
     }
 
-    protected function createContainerFromFile($file, $data = [], $resetCompilerPasses = true, $compile = true, FrameworkExtension $extension = null)
+    protected function createContainerFromFile(string $file, array $data = [], bool $resetCompilerPasses = true, bool $compile = true, FrameworkExtension $extension = null): ContainerBuilder
     {
         $cacheKey = md5(static::class.$file.serialize($data));
         if ($compile && isset(self::$containerCache[$cacheKey])) {
@@ -2321,7 +2319,7 @@ abstract class FrameworkExtensionTestCase extends TestCase
         return self::$containerCache[$cacheKey] = $container;
     }
 
-    protected function createContainerFromClosure($closure, $data = [])
+    protected function createContainerFromClosure($closure, $data = []): ContainerBuilder
     {
         $container = $this->createContainer($data);
         $container->registerExtension(new FrameworkExtension());
@@ -2391,17 +2389,5 @@ abstract class FrameworkExtensionTestCase extends TestCase
             'cache.adapter.array' => $this->assertSame(ArrayAdapter::class, $parentDefinition->getClass()),
             default => $this->fail('Unresolved adapter: '.$adapter),
         };
-    }
-}
-
-/**
- * Simulates ReplaceAliasByActualDefinitionPass.
- */
-class TestAnnotationsPass implements CompilerPassInterface
-{
-    public function process(ContainerBuilder $container): void
-    {
-        $container->setDefinition('annotation_reader', $container->getDefinition('annotations.cached_reader'));
-        $container->removeDefinition('annotations.cached_reader');
     }
 }

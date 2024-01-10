@@ -1,6 +1,6 @@
-<?xml version="1.0"?>
-<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
-    <file source-language="en" datatype="plaintext" original="file.ext">
+<?xml version="1.0" encoding="utf-8"?>
+<xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
+    <file source-language="en" target-language="hu" datatype="plaintext" original="file.ext">
         <body>
             <trans-unit id="1">
                 <source>This value should be false.</source>
@@ -335,24 +335,24 @@
                 <target>Ez az érték érvényes JSON kell, hogy legyen.</target>
             </trans-unit>
             <trans-unit id="87">
+                <source>This collection should contain only unique elements.</source>
+                <target>Ez a gyűjtemény csak egyedi elemeket tartalmazhat.</target>
+            </trans-unit>
+            <trans-unit id="88">
                 <source>This value should be positive.</source>
                 <target>Ennek az értéknek pozitívnak kell lennie.</target>
             </trans-unit>
-            <trans-unit id="88">
+            <trans-unit id="89">
                 <source>This value should be either positive or zero.</source>
                 <target>Ennek az értéknek pozitívnak vagy nullának kell lennie.</target>
             </trans-unit>
-            <trans-unit id="89">
+            <trans-unit id="90">
                 <source>This value should be negative.</source>
                 <target>Ennek az értéknek negatívnak kell lennie.</target>
             </trans-unit>
-            <trans-unit id="90">
+            <trans-unit id="91">
                 <source>This value should be either negative or zero.</source>
                 <target>Ennek az értéknek negatívnak vagy nullának kell lennie.</target>
-            </trans-unit>
-            <trans-unit id="91">
-                <source>This collection should contain only unique elements.</source>
-                <target>Ez a gyűjtemény csak egyedi elemeket tartalmazhat.</target>
             </trans-unit>
             <trans-unit id="92">
                 <source>This value is not a valid timezone.</source>
@@ -401,6 +401,42 @@
             <trans-unit id="103">
                 <source>The value of the netmask should be between {{ min }} and {{ max }}.</source>
                 <target>Ennek a netmask értéknek {{ min }} és {{ max }} között kell lennie.</target>
+            </trans-unit>
+            <trans-unit id="104">
+                <source>The filename is too long. It should have {{ filename_max_length }} character or less.|The filename is too long. It should have {{ filename_max_length }} characters or less.</source>
+                <target>A fájlnév túl hosszú. {{ filename_max_length }} karakter vagy kevesebb legyen.|A fájlnév túl hosszú. {{ filename_max_length }} karakter vagy kevesebb legyen.</target>
+            </trans-unit>
+            <trans-unit id="105">
+                <source>The password strength is too low. Please use a stronger password.</source>
+                <target>A jelszó túl egyszerű. Kérjük, használjon egy bonyolultabb jelszót.</target>
+            </trans-unit>
+            <trans-unit id="106">
+                <source>This value contains characters that are not allowed by the current restriction-level.</source>
+                <target>Ez az érték olyan karaktereket tartalmaz, amik nem megengedettek.</target>
+            </trans-unit>
+            <trans-unit id="107">
+                <source>Using invisible characters is not allowed.</source>
+                <target>Láthatatlan karaktert használata nem megengedett.</target>
+            </trans-unit>
+            <trans-unit id="108">
+                <source>Mixing numbers from different scripts is not allowed.</source>
+                <target>Különböző szám írásmódok használata nem megengedett.</target>
+            </trans-unit>
+            <trans-unit id="109">
+                <source>Using hidden overlay characters is not allowed.</source>
+                <target>Rejtett módosító karakterek használata nem megengedett.</target>
+            </trans-unit>
+            <trans-unit id="110">
+                <source>The extension of the file is invalid ({{ extension }}). Allowed extensions are {{ extensions }}.</source>
+                <target>A fájl kiterjesztése érvénytelen ({{ extension }}). Engedélyezett kiterjesztések: {{ extensions }}.</target>
+            </trans-unit>
+            <trans-unit id="111">
+                <source>The detected character encoding is invalid ({{ detected }}). Allowed encodings are {{ encodings }}.</source>
+                <target>Az érzékelt karakterkódolás érvénytelen ({{ detected }}). Engedélyezett karakterkódolások: {{ encodings }}.</target>
+            </trans-unit>
+            <trans-unit id="112">
+                <source>This is not a valid MAC address.</source>
+                <target>Ez egy érvénytelen MAC cím.</target>
             </trans-unit>
         </body>
     </file>

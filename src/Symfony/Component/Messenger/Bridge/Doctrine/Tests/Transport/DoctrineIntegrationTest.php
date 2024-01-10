@@ -13,7 +13,6 @@ namespace Symfony\Component\Messenger\Bridge\Doctrine\Tests\Transport;
 
 use Doctrine\DBAL\Configuration;
 use Doctrine\DBAL\DriverManager;
-use Doctrine\DBAL\Result;
 use Doctrine\DBAL\Schema\DefaultSchemaManagerFactory;
 use Doctrine\DBAL\Tools\DsnParser;
 use PHPUnit\Framework\TestCase;
@@ -56,21 +55,38 @@ class DoctrineIntegrationTest extends TestCase
     {
         $this->connection->send('{"message": "Hi i am delayed"}', ['type' => DummyMessage::class], 600000);
 
-        $stmt = $this->driverConnection->createQueryBuilder()
+        $qb = $this->driverConnection->createQueryBuilder()
             ->select('m.available_at')
             ->from('messenger_messages', 'm')
             ->where('m.body = :body')
             ->setParameter('body', '{"message": "Hi i am delayed"}');
-        if (method_exists($stmt, 'executeQuery')) {
-            $stmt = $stmt->executeQuery();
-        } else {
-            $stmt = $stmt->execute();
-        }
 
-        $available_at = new \DateTimeImmutable($stmt instanceof Result ? $stmt->fetchOne() : $stmt->fetchColumn());
+        // DBAL 2 compatibility
+        $result = method_exists($qb, 'executeQuery') ? $qb->executeQuery() : $qb->execute();
 
-        $now = new \DateTimeImmutable('now + 60 seconds');
-        $this->assertGreaterThan($now, $available_at);
+        $availableAt = new \DateTimeImmutable($result->fetchOne(), new \DateTimeZone('UTC'));
+
+        $now = new \DateTimeImmutable('now + 60 seconds', new \DateTimeZone('UTC'));
+        $this->assertGreaterThan($now, $availableAt);
+    }
+
+    public function testSendWithNegativeDelay()
+    {
+        $this->connection->send('{"message": "Hi, I am not actually delayed"}', ['type' => DummyMessage::class], -600000);
+
+        $qb = $this->driverConnection->createQueryBuilder()
+            ->select('m.available_at')
+            ->from('messenger_messages', 'm')
+            ->where('m.body = :body')
+            ->setParameter('body', '{"message": "Hi, I am not actually delayed"}');
+
+        // DBAL 2 compatibility
+        $result = method_exists($qb, 'executeQuery') ? $qb->executeQuery() : $qb->execute();
+
+        $availableAt = new \DateTimeImmutable($result->fetchOne(), new \DateTimeZone('UTC'));
+
+        $now = new \DateTimeImmutable('now - 60 seconds', new \DateTimeZone('UTC'));
+        $this->assertLessThan($now, $availableAt);
     }
 
     public function testItRetrieveTheFirstAvailableMessage()
@@ -151,7 +167,7 @@ class DoctrineIntegrationTest extends TestCase
     public function testItRetrieveTheMessageThatIsOlderThanRedeliverTimeout()
     {
         $this->connection->setup();
-        $twoHoursAgo = new \DateTimeImmutable('now -2 hours');
+        $twoHoursAgo = new \DateTimeImmutable('now -2 hours', new \DateTimeZone('UTC'));
         $this->driverConnection->insert('messenger_messages', [
             'body' => '{"message": "Hi requeued"}',
             'headers' => json_encode(['type' => DummyMessage::class]),
@@ -183,7 +199,7 @@ class DoctrineIntegrationTest extends TestCase
         $this->assertEquals('the body', $envelope['body']);
     }
 
-    private function formatDateTime(\DateTimeImmutable $dateTime)
+    private function formatDateTime(\DateTimeImmutable $dateTime): string
     {
         return $dateTime->format($this->driverConnection->getDatabasePlatform()->getDateTimeFormatString());
     }

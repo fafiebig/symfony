@@ -12,7 +12,6 @@
 namespace Symfony\Component\Messenger\Tests\DependencyInjection;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\Bridge\PhpUnit\ExpectDeprecationTrait;
 use Symfony\Component\DependencyInjection\ChildDefinition;
 use Symfony\Component\DependencyInjection\Compiler\AttributeAutoconfigurationPass;
 use Symfony\Component\DependencyInjection\Compiler\ResolveChildDefinitionsPass;
@@ -50,6 +49,7 @@ use Symfony\Component\Messenger\Tests\Fixtures\MultipleBusesMessageHandler;
 use Symfony\Component\Messenger\Tests\Fixtures\SecondMessage;
 use Symfony\Component\Messenger\Tests\Fixtures\TaggedDummyHandler;
 use Symfony\Component\Messenger\Tests\Fixtures\TaggedDummyHandlerWithUnionTypes;
+use Symfony\Component\Messenger\Tests\Fixtures\ThirdMessage;
 use Symfony\Component\Messenger\Tests\Fixtures\UnionBuiltinTypeArgumentHandler;
 use Symfony\Component\Messenger\Tests\Fixtures\UnionTypeArgumentHandler;
 use Symfony\Component\Messenger\Tests\Fixtures\UnionTypeOneMessage;
@@ -58,8 +58,6 @@ use Symfony\Component\Messenger\Transport\Receiver\ReceiverInterface;
 
 class MessengerPassTest extends TestCase
 {
-    use ExpectDeprecationTrait;
-
     public function testProcess()
     {
         $container = $this->getContainerBuilder($busId = 'message_bus');
@@ -100,7 +98,7 @@ class MessengerPassTest extends TestCase
         $container = $this->getContainerBuilder($busId = 'message_bus');
         $container
             ->register(DummyHandler::class, DummyHandler::class)
-            ->addTag('messenger.message_handler', ['from_transport' => 'async'])
+            ->addTag('messenger.message_handler', ['from_transport' => 'async', 'method' => '__invoke'])
         ;
 
         (new MessengerPass())->process($container);
@@ -111,7 +109,7 @@ class MessengerPassTest extends TestCase
         $handlerDescriptionMapping = $handlersLocatorDefinition->getArgument(0);
         $this->assertCount(1, $handlerDescriptionMapping);
 
-        $this->assertHandlerDescriptor($container, $handlerDescriptionMapping, DummyMessage::class, [DummyHandler::class], [['from_transport' => 'async']]);
+        $this->assertHandlerDescriptor($container, $handlerDescriptionMapping, DummyMessage::class, [[DummyHandler::class, '__invoke']], [['from_transport' => 'async']]);
     }
 
     public function testHandledMessageTypeResolvedWithMethodAndNoHandlesViaTagAttributes()
@@ -163,7 +161,7 @@ class MessengerPassTest extends TestCase
         $this->assertSame(HandlersLocator::class, $handlersLocatorDefinition->getClass());
 
         $handlerDescriptionMapping = $handlersLocatorDefinition->getArgument(0);
-        $this->assertCount(2, $handlerDescriptionMapping);
+        $this->assertCount(3, $handlerDescriptionMapping);
 
         $this->assertHandlerDescriptor($container, $handlerDescriptionMapping, DummyMessage::class, [TaggedDummyHandler::class], [[]]);
         $this->assertHandlerDescriptor(
@@ -171,6 +169,19 @@ class MessengerPassTest extends TestCase
             $handlerDescriptionMapping,
             SecondMessage::class,
             [[TaggedDummyHandler::class, 'handleSecondMessage']]
+        );
+        $this->assertHandlerDescriptor(
+            $container,
+            $handlerDescriptionMapping,
+            ThirdMessage::class,
+            [
+                [TaggedDummyHandler::class, 'handleThirdMessage'],
+                [TaggedDummyHandler::class, 'handleThirdMessage'],
+            ],
+            [
+                ['from_transport' => 'a'],
+                ['from_transport' => 'b'],
+            ],
         );
     }
 

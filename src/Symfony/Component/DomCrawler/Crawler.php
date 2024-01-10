@@ -23,10 +23,7 @@ use Symfony\Component\CssSelector\CssSelectorConverter;
  */
 class Crawler implements \Countable, \IteratorAggregate
 {
-    /**
-     * @var string|null
-     */
-    protected $uri;
+    protected ?string $uri;
 
     /**
      * The default namespace prefix to be used with XPath and CSS expressions.
@@ -503,17 +500,23 @@ class Crawler implements \Countable, \IteratorAggregate
     /**
      * Returns the attribute value of the first node of the list.
      *
+     * @param string|null $default When not null: the value to return when the node or attribute is empty
+     *
      * @throws \InvalidArgumentException When current node is empty
      */
-    public function attr(string $attribute): ?string
+    public function attr(string $attribute, string $default = null): ?string
     {
         if (!$this->nodes) {
+            if (null !== $default) {
+                return $default;
+            }
+
             throw new \InvalidArgumentException('The current node list is empty.');
         }
 
         $node = $this->getNode(0);
 
-        return $node->hasAttribute($attribute) ? $node->getAttribute($attribute) : null;
+        return $node->hasAttribute($attribute) ? $node->getAttribute($attribute) : $default;
     }
 
     /**
@@ -567,7 +570,7 @@ class Crawler implements \Countable, \IteratorAggregate
     public function innerText(bool $normalizeWhitespace = true): string
     {
         foreach ($this->getNode(0)->childNodes as $childNode) {
-            if (\XML_TEXT_NODE !== $childNode->nodeType) {
+            if (\XML_TEXT_NODE !== $childNode->nodeType && \XML_CDATA_SECTION_NODE !== $childNode->nodeType) {
                 continue;
             }
             if (!$normalizeWhitespace) {

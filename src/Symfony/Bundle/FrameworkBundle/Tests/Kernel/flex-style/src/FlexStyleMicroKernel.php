@@ -18,7 +18,7 @@ use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigura
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Kernel;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Loader\Configurator\RoutingConfigurator;
 
 class FlexStyleMicroKernel extends Kernel
@@ -103,6 +103,8 @@ class FlexStyleMicroKernel extends Kernel
         $c->extension('framework', [
             'annotations' => false,
             'http_method_override' => false,
+            'handle_all_throwables' => true,
+            'php_errors' => ['log' => true],
             'router' => ['utf8' => true],
         ]);
     }

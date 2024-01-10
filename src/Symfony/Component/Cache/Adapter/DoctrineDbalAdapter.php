@@ -14,7 +14,6 @@ namespace Symfony\Component\Cache\Adapter;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Configuration;
 use Doctrine\DBAL\Connection;
-use Doctrine\DBAL\Driver\ServerInfoAwareConnection;
 use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Exception as DBALException;
 use Doctrine\DBAL\Exception\TableNotFoundException;
@@ -34,7 +33,6 @@ class DoctrineDbalAdapter extends AbstractAdapter implements PruneableInterface
     private MarshallerInterface $marshaller;
     private Connection $conn;
     private string $platformName;
-    private string $serverVersion;
     private string $table = 'cache_items';
     private string $idCol = 'item_id';
     private string $dataCol = 'item_data';
@@ -202,11 +200,7 @@ class DoctrineDbalAdapter extends AbstractAdapter implements PruneableInterface
     protected function doClear(string $namespace): bool
     {
         if ('' === $namespace) {
-            if ('sqlite' === $this->getPlatformName()) {
-                $sql = "DELETE FROM $this->table";
-            } else {
-                $sql = "TRUNCATE TABLE $this->table";
-            }
+            $sql = $this->conn->getDatabasePlatform()->getTruncateTableSQL($this->table);
         } else {
             $sql = "DELETE FROM $this->table WHERE $this->idCol LIKE '$namespace%'";
         }
@@ -239,27 +233,27 @@ class DoctrineDbalAdapter extends AbstractAdapter implements PruneableInterface
         $platformName = $this->getPlatformName();
         $insertSql = "INSERT INTO $this->table ($this->idCol, $this->dataCol, $this->lifetimeCol, $this->timeCol) VALUES (?, ?, ?, ?)";
 
-        switch (true) {
-            case 'mysql' === $platformName:
+        switch ($platformName) {
+            case 'mysql':
                 $sql = $insertSql." ON DUPLICATE KEY UPDATE $this->dataCol = VALUES($this->dataCol), $this->lifetimeCol = VALUES($this->lifetimeCol), $this->timeCol = VALUES($this->timeCol)";
                 break;
-            case 'oci' === $platformName:
+            case 'oci':
                 // DUAL is Oracle specific dummy table
                 $sql = "MERGE INTO $this->table USING DUAL ON ($this->idCol = ?) ".
                     "WHEN NOT MATCHED THEN INSERT ($this->idCol, $this->dataCol, $this->lifetimeCol, $this->timeCol) VALUES (?, ?, ?, ?) ".
                     "WHEN MATCHED THEN UPDATE SET $this->dataCol = ?, $this->lifetimeCol = ?, $this->timeCol = ?";
                 break;
-            case 'sqlsrv' === $platformName && version_compare($this->getServerVersion(), '10', '>='):
+            case 'sqlsrv':
                 // MERGE is only available since SQL Server 2008 and must be terminated by semicolon
                 // It also requires HOLDLOCK according to http://weblogs.sqlteam.com/dang/archive/2009/01/31/UPSERT-Race-Condition-With-MERGE.aspx
                 $sql = "MERGE INTO $this->table WITH (HOLDLOCK) USING (SELECT 1 AS dummy) AS src ON ($this->idCol = ?) ".
                     "WHEN NOT MATCHED THEN INSERT ($this->idCol, $this->dataCol, $this->lifetimeCol, $this->timeCol) VALUES (?, ?, ?, ?) ".
                     "WHEN MATCHED THEN UPDATE SET $this->dataCol = ?, $this->lifetimeCol = ?, $this->timeCol = ?;";
                 break;
-            case 'sqlite' === $platformName:
+            case 'sqlite':
                 $sql = 'INSERT OR REPLACE'.substr($insertSql, 6);
                 break;
-            case 'pgsql' === $platformName && version_compare($this->getServerVersion(), '9.5', '>='):
+            case 'pgsql':
                 $sql = $insertSql." ON CONFLICT ($this->idCol) DO UPDATE SET ($this->dataCol, $this->lifetimeCol, $this->timeCol) = (EXCLUDED.$this->dataCol, EXCLUDED.$this->lifetimeCol, EXCLUDED.$this->timeCol)";
                 break;
             default:
@@ -367,20 +361,6 @@ class DoctrineDbalAdapter extends AbstractAdapter implements PruneableInterface
             $platform instanceof \Doctrine\DBAL\Platforms\SQLServerPlatform => 'sqlsrv',
             default => $platform::class,
         };
-    }
-
-    private function getServerVersion(): string
-    {
-        if (isset($this->serverVersion)) {
-            return $this->serverVersion;
-        }
-
-        $conn = $this->conn->getWrappedConnection();
-        if ($conn instanceof ServerInfoAwareConnection) {
-            return $this->serverVersion = $conn->getServerVersion();
-        }
-
-        return $this->serverVersion = '0';
     }
 
     private function addTableToSchema(Schema $schema): void

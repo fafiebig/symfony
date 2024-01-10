@@ -54,7 +54,7 @@ class GroupSequence
      *
      * @var array<int, string|string[]|GroupSequence>
      */
-    public $groups;
+    public array $groups;
 
     /**
      * The group in which cascaded objects are validated when validating
@@ -67,10 +67,8 @@ class GroupSequence
      * "Default" group. When validating that class in the "Default" group, the
      * group sequence is used instead, but still the "Default" group should be
      * cascaded to other objects.
-     *
-     * @var string|GroupSequence
      */
-    public $cascadedGroup;
+    public string|GroupSequence $cascadedGroup;
 
     /**
      * Creates a new group sequence.
@@ -79,7 +77,6 @@ class GroupSequence
      */
     public function __construct(array $groups)
     {
-        // Support for Doctrine annotations
         $this->groups = $groups['value'] ?? $groups;
     }
 }

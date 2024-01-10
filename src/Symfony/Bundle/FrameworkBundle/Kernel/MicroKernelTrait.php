@@ -85,7 +85,7 @@ trait MicroKernelTrait
         }
 
         if (false !== ($fileName = (new \ReflectionObject($this))->getFileName())) {
-            $routes->import($fileName, 'annotation');
+            $routes->import($fileName, 'attribute');
         }
     }
 
@@ -112,6 +112,15 @@ trait MicroKernelTrait
         }
 
         return parent::getCacheDir();
+    }
+
+    public function getBuildDir(): string
+    {
+        if (isset($_SERVER['APP_BUILD_DIR'])) {
+            return $_SERVER['APP_BUILD_DIR'].'/'.$this->environment;
+        }
+
+        return parent::getBuildDir();
     }
 
     public function getLogDir(): string

@@ -118,30 +118,30 @@ TABLE
                 ['ISBN', 'Title', 'Author'],
                 $books,
                 'compact',
-<<<'TABLE'
-ISBN          Title                    Author           
-99921-58-10-7 Divine Comedy            Dante Alighieri  
-9971-5-0210-0 A Tale of Two Cities     Charles Dickens  
-960-425-059-0 The Lord of the Rings    J. R. R. Tolkien 
-80-902734-1-6 And Then There Were None Agatha Christie  
-
-TABLE
+                implode("\n", [
+                    'ISBN          Title                    Author           ',
+                    '99921-58-10-7 Divine Comedy            Dante Alighieri  ',
+                    '9971-5-0210-0 A Tale of Two Cities     Charles Dickens  ',
+                    '960-425-059-0 The Lord of the Rings    J. R. R. Tolkien ',
+                    '80-902734-1-6 And Then There Were None Agatha Christie  ',
+                    '',
+                ]),
             ],
             [
                 ['ISBN', 'Title', 'Author'],
                 $books,
                 'borderless',
-<<<'TABLE'
- =============== ========================== ================== 
-  ISBN            Title                      Author            
- =============== ========================== ================== 
-  99921-58-10-7   Divine Comedy              Dante Alighieri   
-  9971-5-0210-0   A Tale of Two Cities       Charles Dickens   
-  960-425-059-0   The Lord of the Rings      J. R. R. Tolkien  
-  80-902734-1-6   And Then There Were None   Agatha Christie   
- =============== ========================== ================== 
-
-TABLE
+                implode("\n", [
+                    ' =============== ========================== ================== ',
+                    '  ISBN            Title                      Author            ',
+                    ' =============== ========================== ================== ',
+                    '  99921-58-10-7   Divine Comedy              Dante Alighieri   ',
+                    '  9971-5-0210-0   A Tale of Two Cities       Charles Dickens   ',
+                    '  960-425-059-0   The Lord of the Rings      J. R. R. Tolkien  ',
+                    '  80-902734-1-6   And Then There Were None   Agatha Christie   ',
+                    ' =============== ========================== ================== ',
+                    '',
+                ]),
             ],
             [
                 ['ISBN', 'Title', 'Author'],
@@ -1378,12 +1378,14 @@ TABLE;
 
         $expected =
             <<<TABLE
-+---------------+-------+------------+-----------------+
-| Divine Comedy | A Tal | The Lord o | And Then There  |
-|               | e of  | f the Ring | Were None       |
-|               | Two C | s          |                 |
-|               | ities |            |                 |
-+---------------+-------+------------+-----------------+
++---------------+-------+----------+----------------+
+| Divine Comedy | A     | The Lord | And Then There |
+|               | Tale  | of the   | Were None      |
+|               | of    | Rings    |                |
+|               | Two   |          |                |
+|               | Citie |          |                |
+|               | s     |          |                |
++---------------+-------+----------+----------------+
 
 TABLE;
 
@@ -1416,8 +1418,8 @@ TABLE;
 | Publication | Very long header with a lot of |
 |             | information                    |
 +-------------+--------------------------------+
-| 1954        | The Lord of the Rings, by J.R. |
-|             | R. Tolkien                     |
+| 1954        | The Lord of the Rings, by      |
+|             | J.R.R. Tolkien                 |
 +-------------+--------------------------------+
 
 TABLE;
@@ -1577,8 +1579,8 @@ EOTXT;
 | Lorem ipsum dolor sit amet, consectetur adipi       |
 | scing elit, sed do eiusmod tempor                   |
 +-----------------+-----------------+-----------------+
-| Lorem ipsum dolor sit amet, consectetur adipi       |
-| scing elit, sed do eiusmod tempor                   |
+| Lorem ipsum dolor sit amet, consectetur             |
+| adipiscing elit, sed do eiusmod tempor              |
 +-----------------+-----------------+-----------------+
 | Lorem ipsum dolor sit amet, co    | hello world     |
 | nsectetur                         |                 |
@@ -1586,13 +1588,13 @@ EOTXT;
 | hello world     | Lorem ipsum dolor sit amet, co    |
 |                 | nsectetur adipiscing elit         |
 +-----------------+-----------------+-----------------+
-| hello           | world           | Lorem ipsum dol |
-|                 |                 | or sit amet, co |
-|                 |                 | nsectetur       |
+| hello           | world           | Lorem ipsum     |
+|                 |                 | dolor sit amet, |
+|                 |                 | consectetur     |
 +-----------------+-----------------+-----------------+
 | Symfony         | Test            | Lorem ipsum dol |
-|                 |                 | or sit amet, co |
-|                 |                 | nsectetur       |
+|                 |                 | or sit amet,    |
+|                 |                 | consectetur     |
 +-----------------+-----------------+-----------------+
 
 TABLE;
@@ -1984,8 +1986,9 @@ EOTXT
         $expected =
             <<<TABLE
 +----------------------+
-| \033]8;;Lorem\033\\Lorem ipsum dolor si\033]8;;\033\\ |
-| \033]8;;Lorem\033\\t amet, consectetur \033]8;;\033\\ |
+| \033]8;;Lorem\033\\Lorem ipsum dolor\033]8;;\033\\    |
+| \033]8;;Lorem\033\\sit amet,\033]8;;\033\\            |
+| \033]8;;Lorem\033\\consectetur\033]8;;\033\\          |
 | \033]8;;Lorem\033\\adipiscing elit, sed\033]8;;\033\\ |
 | \033]8;;Lorem\033\\do eiusmod tempor\033]8;;\033\\    |
 +----------------------+
@@ -1993,5 +1996,64 @@ EOTXT
 TABLE;
 
         $this->assertSame($expected, $this->getOutputContent($output));
+    }
+
+    public function testGithubIssue52101HorizontalTrue()
+    {
+        $tableStyle = (new TableStyle())
+            ->setHorizontalBorderChars('─')
+            ->setVerticalBorderChars('│')
+            ->setCrossingChars('┼', '┌', '┬', '┐', '┤', '┘', '┴', '└', '├')
+        ;
+
+        $table = (new Table($output = $this->getOutputStream()))
+            ->setStyle($tableStyle)
+            ->setHeaderTitle('Title')
+            ->setHeaders(['Hello', 'World'])
+            ->setRows([[1, 2], [3, 4]])
+            ->setHorizontal(true)
+        ;
+        $table->render();
+
+        $this->assertSame(<<<TABLE
+┌──── Title ┬───┐
+│ Hello │ 1 │ 3 │
+│ World │ 2 │ 4 │
+└───────┴───┴───┘
+
+TABLE
+            ,
+            $this->getOutputContent($output)
+        );
+    }
+
+    public function testGithubIssue52101HorizontalFalse()
+    {
+        $tableStyle = (new TableStyle())
+            ->setHorizontalBorderChars('─')
+            ->setVerticalBorderChars('│')
+            ->setCrossingChars('┼', '┌', '┬', '┐', '┤', '┘', '┴', '└', '├')
+        ;
+
+        $table = (new Table($output = $this->getOutputStream()))
+            ->setStyle($tableStyle)
+            ->setHeaderTitle('Title')
+            ->setHeaders(['Hello', 'World'])
+            ->setRows([[1, 2], [3, 4]])
+            ->setHorizontal(false)
+        ;
+        $table->render();
+
+        $this->assertSame(<<<TABLE
+┌──── Title ────┐
+│ Hello │ World │
+├───────┼───────┤
+│ 1     │ 2     │
+│ 3     │ 4     │
+└───────┴───────┘
+
+TABLE,
+            $this->getOutputContent($output)
+        );
     }
 }

@@ -18,7 +18,7 @@ namespace Symfony\Component\HttpFoundation;
  *
  * @implements \IteratorAggregate<string, list<string|null>>
  */
-class HeaderBag implements \IteratorAggregate, \Countable
+class HeaderBag implements \IteratorAggregate, \Countable, \Stringable
 {
     protected const UPPER = '_ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     protected const LOWER = '-abcdefghijklmnopqrstuvwxyz';
@@ -26,8 +26,8 @@ class HeaderBag implements \IteratorAggregate, \Countable
     /**
      * @var array<string, list<string|null>>
      */
-    protected $headers = [];
-    protected $cacheControl = [];
+    protected array $headers = [];
+    protected array $cacheControl = [];
 
     public function __construct(array $headers = [])
     {

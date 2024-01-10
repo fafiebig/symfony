@@ -26,7 +26,7 @@ use Symfony\Component\Dotenv\Dotenv;
  *
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-#[AsCommand(name: 'debug:dotenv', description: 'Lists all dotenv files with variables and values')]
+#[AsCommand(name: 'debug:dotenv', description: 'List all dotenv files with variables and values')]
 final class DebugCommand extends Command
 {
     private string $kernelEnvironment;
@@ -141,7 +141,13 @@ EOT
 
     private function getAvailableVars(): array
     {
-        $vars = explode(',', $_SERVER['SYMFONY_DOTENV_VARS'] ?? '');
+        $dotenvVars = $_SERVER['SYMFONY_DOTENV_VARS'] ?? '';
+
+        if ('' === $dotenvVars) {
+            return [];
+        }
+
+        $vars = explode(',', $dotenvVars);
         sort($vars);
 
         return $vars;

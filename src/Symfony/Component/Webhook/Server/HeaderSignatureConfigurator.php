@@ -13,12 +13,11 @@ namespace Symfony\Component\Webhook\Server;
 
 use Symfony\Component\HttpClient\HttpOptions;
 use Symfony\Component\RemoteEvent\RemoteEvent;
+use Symfony\Component\Webhook\Exception\InvalidArgumentException;
 use Symfony\Component\Webhook\Exception\LogicException;
 
 /**
  * @author Fabien Potencier <fabien@symfony.com>
- *
- * @experimental in 6.3
  */
 final class HeaderSignatureConfigurator implements RequestConfiguratorInterface
 {
@@ -28,8 +27,12 @@ final class HeaderSignatureConfigurator implements RequestConfiguratorInterface
     ) {
     }
 
-    public function configure(RemoteEvent $event, string $secret, HttpOptions $options): void
+    public function configure(RemoteEvent $event, #[\SensitiveParameter] string $secret, HttpOptions $options): void
     {
+        if (!$secret) {
+            throw new InvalidArgumentException('A non-empty secret is required.');
+        }
+
         $opts = $options->toArray();
         $headers = $opts['headers'];
         if (!isset($opts['body'])) {

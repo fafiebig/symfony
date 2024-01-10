@@ -83,7 +83,7 @@ class PlantUmlDumperTest extends TestCase
 
         $placesMetadata = [];
         $placesMetadata['place a'] = [
-            'description' => 'My custom place description',
+            'description' => "My custom\nplace description",
         ];
         $inMemoryMetadataStore = new InMemoryMetadataStore([], $placesMetadata);
         $definition = new Definition($places, $transitions, null, $inMemoryMetadataStore);
@@ -96,6 +96,6 @@ class PlantUmlDumperTest extends TestCase
 
     private function getFixturePath($name, $transitionType): string
     {
-        return __DIR__.'/../fixtures/puml/'.$transitionType.'/'.$name.'.puml';
+        return __DIR__.'/../Fixtures/puml/'.$transitionType.'/'.$name.'.puml';
     }
 }

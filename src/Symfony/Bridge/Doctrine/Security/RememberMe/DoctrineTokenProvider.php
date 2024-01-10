@@ -42,7 +42,7 @@ use Symfony\Component\Security\Core\Exception\TokenNotFoundException;
 final class DoctrineTokenProvider implements TokenProviderInterface, TokenVerifierInterface
 {
     public function __construct(
-        private Connection $conn,
+        private readonly Connection $conn,
     ) {
     }
 
@@ -80,7 +80,6 @@ final class DoctrineTokenProvider implements TokenProviderInterface, TokenVerifi
             'series' => ParameterType::STRING,
         ];
         $updated = $this->conn->executeStatement($sql, $paramValues, $paramTypes);
-
         if ($updated < 1) {
             throw new TokenNotFoundException('No token found.');
         }

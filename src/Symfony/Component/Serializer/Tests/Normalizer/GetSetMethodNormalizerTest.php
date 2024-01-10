@@ -16,9 +16,11 @@ use PHPUnit\Framework\TestCase;
 use Symfony\Component\PropertyInfo\Extractor\PhpDocExtractor;
 use Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor;
 use Symfony\Component\PropertyInfo\PropertyInfoExtractor;
+use Symfony\Component\Serializer\Attribute\DiscriminatorMap;
 use Symfony\Component\Serializer\Exception\LogicException;
+use Symfony\Component\Serializer\Mapping\ClassDiscriminatorFromClassMetadata;
 use Symfony\Component\Serializer\Mapping\Factory\ClassMetadataFactory;
-use Symfony\Component\Serializer\Mapping\Loader\AnnotationLoader;
+use Symfony\Component\Serializer\Mapping\Loader\AttributeLoader;
 use Symfony\Component\Serializer\NameConverter\CamelCaseToSnakeCaseNameConverter;
 use Symfony\Component\Serializer\NameConverter\MetadataAwareNameConverter;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
@@ -28,6 +30,7 @@ use Symfony\Component\Serializer\Normalizer\GetSetMethodNormalizer;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Component\Serializer\Tests\Fixtures\Attributes\ClassWithIgnoreAnnotation;
 use Symfony\Component\Serializer\Tests\Fixtures\Attributes\ClassWithIgnoreAttribute;
 use Symfony\Component\Serializer\Tests\Fixtures\Attributes\GroupDummy;
 use Symfony\Component\Serializer\Tests\Fixtures\CircularReferenceDummy;
@@ -227,21 +230,21 @@ class GetSetMethodNormalizerTest extends TestCase
 
     protected function getNormalizerForCallbacksWithPropertyTypeExtractor(): GetSetMethodNormalizer
     {
-        $classMetadataFactory = new ClassMetadataFactory(new AnnotationLoader());
+        $classMetadataFactory = new ClassMetadataFactory(new AttributeLoader());
 
         return new GetSetMethodNormalizer($classMetadataFactory, new MetadataAwareNameConverter($classMetadataFactory), $this->getCallbackPropertyTypeExtractor());
     }
 
     protected function getNormalizerForCallbacks(): GetSetMethodNormalizer
     {
-        $classMetadataFactory = new ClassMetadataFactory(new AnnotationLoader());
+        $classMetadataFactory = new ClassMetadataFactory(new AttributeLoader());
 
         return new GetSetMethodNormalizer($classMetadataFactory, new MetadataAwareNameConverter($classMetadataFactory));
     }
 
     protected function getNormalizerForCircularReference(array $defaultContext): GetSetMethodNormalizer
     {
-        $classMetadataFactory = new ClassMetadataFactory(new AnnotationLoader());
+        $classMetadataFactory = new ClassMetadataFactory(new AttributeLoader());
         $normalizer = new GetSetMethodNormalizer($classMetadataFactory, new MetadataAwareNameConverter($classMetadataFactory), null, null, null, $defaultContext);
         new Serializer([$normalizer]);
 
@@ -255,7 +258,7 @@ class GetSetMethodNormalizerTest extends TestCase
 
     protected function getDenormalizerForConstructArguments(): GetSetMethodNormalizer
     {
-        $classMetadataFactory = new ClassMetadataFactory(new AnnotationLoader());
+        $classMetadataFactory = new ClassMetadataFactory(new AttributeLoader());
         $denormalizer = new GetSetMethodNormalizer($classMetadataFactory, new MetadataAwareNameConverter($classMetadataFactory));
         new Serializer([$denormalizer]);
 
@@ -264,21 +267,21 @@ class GetSetMethodNormalizerTest extends TestCase
 
     protected function getNormalizerForGroups(): GetSetMethodNormalizer
     {
-        $classMetadataFactory = new ClassMetadataFactory(new AnnotationLoader());
+        $classMetadataFactory = new ClassMetadataFactory(new AttributeLoader());
 
         return new GetSetMethodNormalizer($classMetadataFactory);
     }
 
     protected function getDenormalizerForGroups(): GetSetMethodNormalizer
     {
-        $classMetadataFactory = new ClassMetadataFactory(new AnnotationLoader());
+        $classMetadataFactory = new ClassMetadataFactory(new AttributeLoader());
 
         return new GetSetMethodNormalizer($classMetadataFactory);
     }
 
     public function testGroupsNormalizeWithNameConverter()
     {
-        $classMetadataFactory = new ClassMetadataFactory(new AnnotationLoader());
+        $classMetadataFactory = new ClassMetadataFactory(new AttributeLoader());
         $this->normalizer = new GetSetMethodNormalizer($classMetadataFactory, new CamelCaseToSnakeCaseNameConverter());
         $this->normalizer->setSerializer($this->serializer);
 
@@ -299,7 +302,7 @@ class GetSetMethodNormalizerTest extends TestCase
 
     public function testGroupsDenormalizeWithNameConverter()
     {
-        $classMetadataFactory = new ClassMetadataFactory(new AnnotationLoader());
+        $classMetadataFactory = new ClassMetadataFactory(new AttributeLoader());
         $this->normalizer = new GetSetMethodNormalizer($classMetadataFactory, new CamelCaseToSnakeCaseNameConverter());
         $this->normalizer->setSerializer($this->serializer);
 
@@ -320,7 +323,7 @@ class GetSetMethodNormalizerTest extends TestCase
 
     protected function getNormalizerForMaxDepth(): NormalizerInterface
     {
-        $classMetadataFactory = new ClassMetadataFactory(new AnnotationLoader());
+        $classMetadataFactory = new ClassMetadataFactory(new AttributeLoader());
         $normalizer = new GetSetMethodNormalizer($classMetadataFactory);
         $serializer = new Serializer([$normalizer]);
         $normalizer->setSerializer($serializer);
@@ -330,7 +333,7 @@ class GetSetMethodNormalizerTest extends TestCase
 
     protected function getDenormalizerForObjectToPopulate(): DenormalizerInterface
     {
-        $classMetadataFactory = new ClassMetadataFactory(new AnnotationLoader());
+        $classMetadataFactory = new ClassMetadataFactory(new AttributeLoader());
         $normalizer = new GetSetMethodNormalizer($classMetadataFactory, null, new PhpDocExtractor());
         new Serializer([$normalizer]);
 
@@ -354,7 +357,7 @@ class GetSetMethodNormalizerTest extends TestCase
 
     protected function getNormalizerForIgnoredAttributes(): GetSetMethodNormalizer
     {
-        $classMetadataFactory = new ClassMetadataFactory(new AnnotationLoader());
+        $classMetadataFactory = new ClassMetadataFactory(new AttributeLoader());
         $normalizer = new GetSetMethodNormalizer($classMetadataFactory, null, new PhpDocExtractor());
         new Serializer([$normalizer]);
 
@@ -363,7 +366,7 @@ class GetSetMethodNormalizerTest extends TestCase
 
     protected function getDenormalizerForIgnoredAttributes(): GetSetMethodNormalizer
     {
-        $classMetadataFactory = new ClassMetadataFactory(new AnnotationLoader());
+        $classMetadataFactory = new ClassMetadataFactory(new AttributeLoader());
         $normalizer = new GetSetMethodNormalizer($classMetadataFactory, null, new PhpDocExtractor());
         new Serializer([$normalizer]);
 
@@ -425,9 +428,22 @@ class GetSetMethodNormalizerTest extends TestCase
         $this->assertFalse($this->normalizer->supportsNormalization(new ObjectWithJustStaticSetterDummy()));
     }
 
-    public function testNotIgnoredMethodSupport()
+    /**
+     * @param class-string $class
+     *
+     * @dataProvider provideNotIgnoredMethodSupport
+     */
+    public function testNotIgnoredMethodSupport(string $class)
     {
-        $this->assertFalse($this->normalizer->supportsNormalization(new ClassWithIgnoreAttribute()));
+        $this->assertFalse($this->normalizer->supportsNormalization(new $class()));
+    }
+
+    public static function provideNotIgnoredMethodSupport(): iterable
+    {
+        return [
+            [ClassWithIgnoreAttribute::class],
+            [ClassWithIgnoreAnnotation::class],
+        ];
     }
 
     public function testPrivateSetter()
@@ -485,9 +501,30 @@ class GetSetMethodNormalizerTest extends TestCase
         return new GetSetMethodNormalizer();
     }
 
-    protected function getNormalizerForSkipUninitializedValues(): NormalizerInterface
+    protected function getNormalizerForSkipUninitializedValues(): GetSetMethodNormalizer
     {
-        return new GetSetMethodNormalizer(new ClassMetadataFactory(new AnnotationLoader()));
+        return new GetSetMethodNormalizer(new ClassMetadataFactory(new AttributeLoader()));
+    }
+
+    public function testNormalizeWithDiscriminator()
+    {
+        $classMetadataFactory = new ClassMetadataFactory(new AttributeLoader());
+        $discriminator = new ClassDiscriminatorFromClassMetadata($classMetadataFactory);
+        $normalizer = new GetSetMethodNormalizer($classMetadataFactory, null, null, $discriminator);
+
+        $this->assertSame(['type' => 'one', 'url' => 'URL_ONE'], $normalizer->normalize(new GetSetMethodDiscriminatedDummyOne()));
+    }
+
+    public function testDenormalizeWithDiscriminator()
+    {
+        $classMetadataFactory = new ClassMetadataFactory(new AttributeLoader());
+        $discriminator = new ClassDiscriminatorFromClassMetadata($classMetadataFactory);
+        $normalizer = new GetSetMethodNormalizer($classMetadataFactory, null, null, $discriminator);
+
+        $denormalized = new GetSetMethodDiscriminatedDummyTwo();
+        $denormalized->setUrl('url');
+
+        $this->assertEquals($denormalized, $normalizer->denormalize(['type' => 'two', 'url' => 'url'], GetSetMethodDummyInterface::class));
     }
 }
 
@@ -751,5 +788,43 @@ class ObjectWithMagicMethod
     public function __call($key, $value)
     {
         throw new \RuntimeException('__call should not be called. Called with: '.$key);
+    }
+}
+
+#[DiscriminatorMap(typeProperty: 'type', mapping: [
+    'one' => GetSetMethodDiscriminatedDummyOne::class,
+    'two' => GetSetMethodDiscriminatedDummyTwo::class,
+])]
+interface GetSetMethodDummyInterface
+{
+}
+
+class GetSetMethodDiscriminatedDummyOne implements GetSetMethodDummyInterface
+{
+    private $url = 'URL_ONE';
+
+    public function getUrl(): string
+    {
+        return $this->url;
+    }
+
+    public function setUrl(string $url): void
+    {
+        $this->url = $url;
+    }
+}
+
+class GetSetMethodDiscriminatedDummyTwo implements GetSetMethodDummyInterface
+{
+    private $url = 'URL_TWO';
+
+    public function getUrl(): string
+    {
+        return $this->url;
+    }
+
+    public function setUrl(string $url): void
+    {
+        $this->url = $url;
     }
 }

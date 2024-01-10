@@ -20,11 +20,9 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
- * @experimental
- *
  * @author Kévin Dunglas <kevin@dunglas.dev>
  */
-#[AsCommand(name: 'importmap:remove', description: 'Removes JavaScript packages')]
+#[AsCommand(name: 'importmap:remove', description: 'Remove JavaScript packages')]
 final class ImportMapRemoveCommand extends Command
 {
     public function __construct(

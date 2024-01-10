@@ -71,6 +71,8 @@ final class Builder
         foreach ($files as $file) {
             $locale = $file->getBasename('.xml');
 
+            $mapsByLocale[$locale] ??= [];
+
             $document = new DOMDocument();
             $document->loadXML(file_get_contents($file));
             $xpath = new DOMXPath($document);
@@ -79,6 +81,11 @@ final class Builder
             foreach ($results as $result) {
                 $emoji = $result->getAttribute('cp');
                 $name = $result->textContent;
+                // Ignoring the hierarchical metadata instructions
+                // (real value will be filled by the parent locale)
+                if (str_contains($name, '↑↑')) {
+                    continue;
+                }
                 $parts = preg_split('//u', $emoji, -1, \PREG_SPLIT_NO_EMPTY);
                 $emojiCodePoints = implode(' ', array_map('dechex', array_map('mb_ord', $parts)));
                 if (!array_key_exists($emojiCodePoints, $emojisCodePoints)) {
@@ -89,7 +96,9 @@ final class Builder
                     ];
                     continue;
                 }
-                self::testEmoji($emoji, $locale);
+                if (!self::testEmoji($emoji, $locale, $emojiCodePoints)) {
+                    continue;
+                }
                 $codePointsCount = mb_strlen($emoji);
                 $mapsByLocale[$locale][$codePointsCount][$emoji] = $name;
             }
@@ -97,15 +106,23 @@ final class Builder
 
         ksort($mapsByLocale);
 
-        foreach ($mapsByLocale as $locale => $maps) {
+        foreach ($mapsByLocale as $locale => $localeMaps) {
             $parentLocale = $locale;
 
             while (false !== $i = strrpos($parentLocale, '_')) {
                 $parentLocale = substr($parentLocale, 0, $i);
-                $maps += $mapsByLocale[$parentLocale] ?? [];
+                $parentMaps = $mapsByLocale[$parentLocale] ?? [];
+                foreach ($parentMaps as $codePointsCount => $parentMap) {
+                    // Ensuring the result map contains all the emojis from the parent map
+                    // if not already defined by the current locale
+                    $localeMaps[$codePointsCount] = [...$parentMap, ...$localeMaps[$codePointsCount] ?? []];
+                }
             }
 
-            yield strtolower("emoji-$locale") => self::createRules($maps);
+            // Skip locales without any emoji
+            if ($localeRules = self::createRules($localeMaps)) {
+                yield strtolower("emoji-$locale") => $localeRules;
+            }
         }
     }
 
@@ -126,7 +143,9 @@ final class Builder
                 continue;
             }
             $emoji = $emojisCodePoints[$emojiCodePoints];
-            self::testEmoji($emoji, 'github');
+            if (!self::testEmoji($emoji, 'github', $emojiCodePoints)) {
+                continue;
+            }
             $codePointsCount = mb_strlen($emoji);
             $maps[$codePointsCount][$emoji] = ":$shortCode:";
         }
@@ -158,7 +177,9 @@ final class Builder
                 continue;
             }
             $emoji = $emojisCodePoints[$emojiCodePoints];
-            self::testEmoji($emoji, 'slack');
+            if (!self::testEmoji($emoji, 'slack', $emojiCodePoints)) {
+                continue;
+            }
             $codePointsCount = mb_strlen($emoji);
             $emojiSlackMaps[$codePointsCount][$emoji] = ":$shortCode:";
             foreach ($shortCodes as $short_name) {
@@ -172,8 +193,10 @@ final class Builder
     public static function buildStripRules(array $emojisCodePoints): iterable
     {
         $maps = [];
-        foreach ($emojisCodePoints as $emoji) {
-            self::testEmoji($emoji, 'strip');
+        foreach ($emojisCodePoints as $codePoints => $emoji) {
+            if (!self::testEmoji($emoji, 'strip', $codePoints)) {
+                continue;
+            }
             $codePointsCount = mb_strlen($emoji);
             $maps[$codePointsCount][$emoji] = '';
         }
@@ -214,11 +237,15 @@ final class Builder
         file_put_contents($file, preg_replace('/QUICK_CHECK = .*;/m', "QUICK_CHECK = {$quickCheck};", file_get_contents($file)));
     }
 
-    private static function testEmoji(string $emoji, string $locale): void
+    private static function testEmoji(string $emoji, string $locale, string $codePoints): bool
     {
         if (!Transliterator::createFromRules("\\$emoji > test ;")) {
-            throw new \RuntimeException(sprintf('Could not create transliterator for "%s" in "%s" locale. Error: "%s".', $emoji, $locale, intl_get_error_message()));
+            printf('Could not create transliterator for "%s" in "%s" locale. Code Point: "%s". Error: "%s".'."\n", $emoji, $locale, $codePoints, intl_get_error_message());
+
+            return false;
         }
+
+        return true;
     }
 
     private static function createRules(array $maps): array

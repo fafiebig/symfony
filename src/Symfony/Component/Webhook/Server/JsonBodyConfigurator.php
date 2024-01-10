@@ -17,8 +17,6 @@ use Symfony\Component\Serializer\SerializerInterface;
 
 /**
  * @author Fabien Potencier <fabien@symfony.com>
- *
- * @experimental in 6.3
  */
 final class JsonBodyConfigurator implements RequestConfiguratorInterface
 {
@@ -27,7 +25,7 @@ final class JsonBodyConfigurator implements RequestConfiguratorInterface
     ) {
     }
 
-    public function configure(RemoteEvent $event, string $secret, HttpOptions $options): void
+    public function configure(RemoteEvent $event, #[\SensitiveParameter] string $secret, HttpOptions $options): void
     {
         $body = $this->serializer->serialize($event->getPayload(), 'json');
         $options->setBody($body);

@@ -17,8 +17,6 @@ use Symfony\Component\Finder\Iterator\RecursiveDirectoryIterator;
 /**
  * Finds assets in the asset mapper.
  *
- * @experimental
- *
  * @author Ryan Weaver <ryan@symfonycasts.com>
  *
  * @final
@@ -35,6 +33,7 @@ class AssetMapperRepository
         private readonly array $paths,
         private readonly string $projectRootDir,
         private readonly array $excludedPathPatterns = [],
+        private readonly bool $excludeDotFiles = true,
     ) {
     }
 
@@ -105,11 +104,17 @@ class AssetMapperRepository
         foreach ($this->getDirectories() as $path => $namespace) {
             $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($path));
             foreach ($iterator as $file) {
+                /** @var \SplFileInfo $file */
                 if (!$file->isFile()) {
                     continue;
                 }
 
                 if ($this->isExcluded($file->getPathname())) {
+                    continue;
+                }
+
+                // avoid potentially exposing PHP files
+                if ('php' === $file->getExtension()) {
                     continue;
                 }
 
@@ -179,6 +184,10 @@ class AssetMapperRepository
             if (preg_match($pattern, $filesystemPath)) {
                 return true;
             }
+        }
+
+        if ($this->excludeDotFiles && str_starts_with(basename($filesystemPath), '.')) {
+            return true;
         }
 
         return false;

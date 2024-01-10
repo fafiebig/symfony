@@ -49,6 +49,7 @@ use Symfony\Component\PasswordHasher\Hasher\NativePasswordHasher;
 use Symfony\Component\PasswordHasher\Hasher\Pbkdf2PasswordHasher;
 use Symfony\Component\PasswordHasher\Hasher\PlaintextPasswordHasher;
 use Symfony\Component\PasswordHasher\Hasher\SodiumPasswordHasher;
+use Symfony\Component\Routing\Loader\ContainerLoader;
 use Symfony\Component\Security\Core\Authorization\Strategy\AffirmativeStrategy;
 use Symfony\Component\Security\Core\Authorization\Strategy\ConsensusStrategy;
 use Symfony\Component\Security\Core\Authorization\Strategy\PriorityStrategy;
@@ -156,6 +157,13 @@ class SecurityExtension extends Extension implements PrependExtensionInterface
         }
 
         $this->createFirewalls($config, $container);
+
+        if ($container::willBeAvailable('symfony/routing', ContainerLoader::class, ['symfony/security-bundle'])) {
+            $this->createLogoutUrisParameter($config['firewalls'] ?? [], $container);
+        } else {
+            $container->removeDefinition('security.route_loader.logout');
+        }
+
         $this->createAuthorization($config, $container);
         $this->createRoleHierarchy($config, $container);
 
@@ -272,12 +280,11 @@ class SecurityExtension extends Extension implements PrependExtensionInterface
         $nbUserProviders = \count($userProviders);
 
         if ($nbUserProviders > 1) {
-            $container->setDefinition('security.user_providers', new Definition(ChainUserProvider::class, [$userProviderIteratorsArgument]))
-                ->setPublic(false);
+            $container->setDefinition('security.user_providers', new Definition(ChainUserProvider::class, [$userProviderIteratorsArgument]));
         } elseif (0 === $nbUserProviders) {
             $container->removeDefinition('security.listener.user_provider');
         } else {
-            $container->setAlias('security.user_providers', new Alias(current($providerIds)))->setPublic(false);
+            $container->setAlias('security.user_providers', new Alias(current($providerIds)));
         }
 
         if (1 === \count($providerIds)) {
@@ -514,6 +521,7 @@ class SecurityExtension extends Extension implements PrependExtensionInterface
                 ->register('debug.security.firewall.authenticator.'.$id, TraceableAuthenticatorManagerListener::class)
                 ->setDecoratedService('security.firewall.authenticator.'.$id)
                 ->setArguments([new Reference('debug.security.firewall.authenticator.'.$id.'.inner')])
+                ->addTag('kernel.reset', ['method' => 'reset'])
             ;
         }
 
@@ -695,7 +703,10 @@ class SecurityExtension extends Extension implements PrependExtensionInterface
     {
         // a custom hasher service
         if (isset($config['id'])) {
-            return new Reference($config['id']);
+            return $config['migrate_from'] ?? false ? [
+                'instance' => new Reference($config['id']),
+                'migrate_from' => $config['migrate_from'],
+            ] : new Reference($config['id']);
         }
 
         if ($config['migrate_from'] ?? false) {
@@ -900,7 +911,6 @@ class SecurityExtension extends Extension implements PrependExtensionInterface
 
         $container
             ->register($id, Expression::class)
-            ->setPublic(false)
             ->addArgument($expression)
         ;
 
@@ -1011,7 +1021,7 @@ class SecurityExtension extends Extension implements PrependExtensionInterface
 
     private function isValidIps(string|array $ips): bool
     {
-        $ipsList = array_reduce((array) $ips, static fn (array $ips, string $ip) => array_merge($ips, preg_split('/\s*,\s*/', $ip)), []);
+        $ipsList = array_reduce((array) $ips, fn ($ips, $ip) => array_merge($ips, preg_split('/\s*,\s*/', $ip)), []);
 
         if (!$ipsList) {
             return false;
@@ -1069,5 +1079,21 @@ class SecurityExtension extends Extension implements PrependExtensionInterface
         }
 
         return $this->sortedFactories;
+    }
+
+    private function createLogoutUrisParameter(array $firewallsConfig, ContainerBuilder $container): void
+    {
+        $logoutUris = [];
+        foreach ($firewallsConfig as $name => $config) {
+            if (!$logoutPath = $config['logout']['path'] ?? null) {
+                continue;
+            }
+
+            if ('/' === $logoutPath[0]) {
+                $logoutUris[$name] = $logoutPath;
+            }
+        }
+
+        $container->setParameter('security.logout_uris', $logoutUris);
     }
 }

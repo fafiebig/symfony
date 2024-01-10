@@ -13,7 +13,8 @@ namespace Symfony\Bridge\Twig;
 
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
-use Symfony\Component\HttpFoundation\Session\Session;
+use Symfony\Component\HttpFoundation\Session\FlashBagAwareSessionInterface;
+use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -31,6 +32,7 @@ class AppVariable
     private string $environment;
     private bool $debug;
     private LocaleSwitcher $localeSwitcher;
+    private array $enabledLocales;
 
     public function setTokenStorage(TokenStorageInterface $tokenStorage): void
     {
@@ -55,6 +57,11 @@ class AppVariable
     public function setLocaleSwitcher(LocaleSwitcher $localeSwitcher): void
     {
         $this->localeSwitcher = $localeSwitcher;
+    }
+
+    public function setEnabledLocales(array $enabledLocales): void
+    {
+        $this->enabledLocales = $enabledLocales;
     }
 
     /**
@@ -100,7 +107,7 @@ class AppVariable
     /**
      * Returns the current session.
      */
-    public function getSession(): ?Session
+    public function getSession(): ?SessionInterface
     {
         if (!isset($this->requestStack)) {
             throw new \RuntimeException('The "app.session" variable is not available.');
@@ -143,6 +150,15 @@ class AppVariable
         return $this->localeSwitcher->getLocale();
     }
 
+    public function getEnabled_locales(): array
+    {
+        if (!isset($this->enabledLocales)) {
+            throw new \RuntimeException('The "app.enabled_locales" variable is not available.');
+        }
+
+        return $this->enabledLocales;
+    }
+
     /**
      * Returns some or all the existing flash messages:
      *  * getFlashes() returns all the flash messages
@@ -152,10 +168,12 @@ class AppVariable
     public function getFlashes(string|array $types = null): array
     {
         try {
-            if (null === $session = $this->getSession()) {
-                return [];
-            }
+            $session = $this->getSession();
         } catch (\RuntimeException) {
+            return [];
+        }
+
+        if (!$session instanceof FlashBagAwareSessionInterface) {
             return [];
         }
 

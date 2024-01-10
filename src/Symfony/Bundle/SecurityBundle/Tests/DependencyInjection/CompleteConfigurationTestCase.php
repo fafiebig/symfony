@@ -18,6 +18,7 @@ use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\DependencyInjection\Argument\IteratorArgument;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
+use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\HttpFoundation\RequestMatcher\AttributesRequestMatcher;
 use Symfony\Component\HttpFoundation\RequestMatcher\HostRequestMatcher;
@@ -137,7 +138,7 @@ abstract class CompleteConfigurationTestCase extends TestCase
             [
                 'simple',
                 'security.user_checker',
-                '.security.request_matcher.h5ibf38',
+                \count((new \ReflectionMethod(ContainerConfigurator::class, 'extension'))->getParameters()) > 2 ? '.security.request_matcher.rud_2nr' : '.security.request_matcher.h5ibf38',
                 false,
                 false,
                 '',
@@ -187,7 +188,7 @@ abstract class CompleteConfigurationTestCase extends TestCase
             [
                 'host',
                 'security.user_checker',
-                '.security.request_matcher.bcmu4fb',
+                \count((new \ReflectionMethod(ContainerConfigurator::class, 'extension'))->getParameters()) > 2 ? '.security.request_matcher.ap9sh8g' : '.security.request_matcher.bcmu4fb',
                 true,
                 false,
                 'security.user.provider.concrete.default',
@@ -242,7 +243,7 @@ abstract class CompleteConfigurationTestCase extends TestCase
             ],
         ], $listeners);
 
-        $this->assertFalse($container->hasAlias(UserCheckerInterface::class, 'No user checker alias is registered when custom user checker services are registered'));
+        $this->assertFalse($container->hasAlias(UserCheckerInterface::class), 'No user checker alias is registered when custom user checker services are registered');
     }
 
     public function testFirewallRequestMatchers()
@@ -714,6 +715,15 @@ abstract class CompleteConfigurationTestCase extends TestCase
         $container = $this->getContainer('logout_clear_site_data');
         $ClearSiteDataConfig = $container->getDefinition('security.firewall.map.config.main')->getArgument(12)['clear_site_data'];
         $this->assertSame(['cookies', 'executionContexts'], $ClearSiteDataConfig);
+    }
+
+    public function testFirewallPatterns()
+    {
+        $container = $this->getContainer('firewall_patterns');
+        $chainRequestMatcherId = (string) $container->getDefinition('security.firewall.map')->getArgument(1)->getValues()['security.firewall.map.context.no_security'];
+        $requestMatcherId = (string) $container->getDefinition($chainRequestMatcherId)->getArgument(0)[0];
+
+        $this->assertSame('(?:^/register$|^/documentation$)', $container->getDefinition($requestMatcherId)->getArgument(0));
     }
 
     protected function getContainer($file)

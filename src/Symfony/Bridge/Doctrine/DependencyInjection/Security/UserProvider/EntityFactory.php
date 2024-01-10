@@ -21,16 +21,15 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
  *
  * @author Fabien Potencier <fabien@symfony.com>
  * @author Christophe Coevoet <stof@notk.org>
+ *
+ * @final
  */
 class EntityFactory implements UserProviderFactoryInterface
 {
-    private string $key;
-    private string $providerId;
-
-    public function __construct(string $key, string $providerId)
-    {
-        $this->key = $key;
-        $this->providerId = $providerId;
+    public function __construct(
+        private readonly string $key,
+        private readonly string $providerId,
+    ) {
     }
 
     public function create(ContainerBuilder $container, string $id, array $config): void

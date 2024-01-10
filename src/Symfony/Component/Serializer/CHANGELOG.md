@@ -13,13 +13,20 @@ CHANGELOG
  * Require explicit argument when calling `AttributeMetadata::setSerializedName()` and `ClassMetadata::setClassDiscriminatorMapping()`
  * Add argument `$context` to `NormalizerInterface::supportsNormalization()` and `DenormalizerInterface::supportsDenormalization()`
  * Remove Doctrine annotations support in favor of native attributes
- * Remove the annotation reader parameter from the constructor of `AnnotationLoader`
+ * Remove `AnnotationLoader`, use `AttributeLoader` instead
 
 6.4
 ---
 
+ * Add `TranslatableNormalizer`
+ * Allow `Context` attribute to target classes
  * Deprecate Doctrine annotations support in favor of native attributes
- * Deprecate passing an annotation reader to the constructor of `AnnotationLoader`
+ * Allow the `Groups` attribute/annotation on classes
+ * JsonDecode: Add `json_decode_detailed_errors` option
+ * Make `ProblemNormalizer` give details about Messenger's `ValidationFailedException`
+ * Add `XmlEncoder::CDATA_WRAPPING` context option
+ * Deprecate `AnnotationLoader`, use `AttributeLoader` instead
+ * Add aliases for all classes in the `Annotation` namespace to `Attribute`
 
 6.3
 ---

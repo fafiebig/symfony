@@ -305,6 +305,9 @@ abstract class AbstractCrawlerTestCase extends TestCase
         } catch (\InvalidArgumentException $e) {
             $this->assertTrue(true, '->attr() throws an \InvalidArgumentException if the node list is empty');
         }
+
+        $this->assertSame('my value', $this->createTestCrawler()->filterXPath('//notexists')->attr('class', 'my value'));
+        $this->assertSame('my value', $this->createTestCrawler()->filterXPath('//li')->attr('attr-not-exists', 'my value'));
     }
 
     public function testMissingAttrValueIsNull()
@@ -376,6 +379,12 @@ abstract class AbstractCrawlerTestCase extends TestCase
                 'Child text Another child',
                 '',
                 '  ',
+            ],
+            [
+                '//*[@id="complex-elements"]/*[@class="six"]',
+                'console.log("Test JavaScript content");',
+                'console.log("Test JavaScript content");',
+                ' console.log("Test JavaScript content"); ',
             ],
         ];
     }
@@ -1311,6 +1320,7 @@ HTML;
                         <div class="three"> Parent text <span>Child text</span> Parent text </div>
                         <div class="four">  <span>Child text</span>  </div>
                         <div class="five"><span>Child text</span>  <span>Another child</span></div>
+                        <script class="six" type="text/javascript"> console.log("Test JavaScript content"); </script>
                     </div>
                 </body>
             </html>

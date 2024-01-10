@@ -22,9 +22,7 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 class UnusedTagsPass implements CompilerPassInterface
 {
     private const KNOWN_TAGS = [
-        'annotations.cached_reader',
         'asset_mapper.compiler',
-        'asset_mapper.importmap.resolver',
         'assets.package',
         'auto_alias',
         'cache.pool',
@@ -83,6 +81,7 @@ class UnusedTagsPass implements CompilerPassInterface
         'routing.loader',
         'routing.route_loader',
         'scheduler.schedule_provider',
+        'scheduler.task',
         'security.authenticator.login_linker',
         'security.expression_language_provider',
         'security.remember_me_handler',
@@ -100,6 +99,7 @@ class UnusedTagsPass implements CompilerPassInterface
         'twig.runtime',
         'validator.auto_mapper',
         'validator.constraint_validator',
+        'validator.group_provider',
         'validator.initializer',
         'workflow',
     ];

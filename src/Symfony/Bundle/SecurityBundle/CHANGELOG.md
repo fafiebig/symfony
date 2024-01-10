@@ -5,12 +5,16 @@ CHANGELOG
 ---
 
  * Enabling SecurityBundle and not configuring it is not allowed
- * Remove configuration options `enable_authenticator_manager` and `csrf_token_generator`
+ * Remove configuration options `enable_authenticator_manager`, `csrf_token_generator` and `require_previous_session`
 
 6.4
 ---
 
  * Deprecate `Security::ACCESS_DENIED_ERROR`, `AUTHENTICATION_ERROR` and `LAST_USERNAME` constants, use the ones on `SecurityRequestAttributes` instead
+ * Allow an array of `pattern` in firewall configuration
+ * Add `$badges` argument to `Security::login`
+ * Deprecate the `require_previous_session` config option. Setting it has no effect anymore
+ * Add `LogoutRouteLoader`
 
 6.3
 ---

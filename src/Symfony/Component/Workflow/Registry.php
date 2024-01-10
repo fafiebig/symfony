@@ -17,8 +17,6 @@ use Symfony\Component\Workflow\SupportStrategy\WorkflowSupportStrategyInterface;
 /**
  * @author Fabien Potencier <fabien@symfony.com>
  * @author Grégoire Pineau <lyrixx@lyrixx.info>
- *
- * @internal
  */
 class Registry
 {
@@ -40,7 +38,7 @@ class Registry
         return false;
     }
 
-    public function get(object $subject, string $workflowName = null): Workflow
+    public function get(object $subject, string $workflowName = null): WorkflowInterface
     {
         $matched = [];
 

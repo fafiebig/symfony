@@ -16,23 +16,19 @@ use Symfony\Component\DependencyInjection\ChildDefinition;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
 /**
- * AbstractFactory is the base class for all classes inheriting from
- * AbstractAuthenticationListener.
- *
  * @author Fabien Potencier <fabien@symfony.com>
  * @author Lukas Kahwe Smith <smith@pooteeweet.org>
  * @author Johannes M. Schmitt <schmittjoh@gmail.com>
  */
 abstract class AbstractFactory implements AuthenticatorFactoryInterface
 {
-    protected $options = [
+    protected array $options = [
         'check_path' => '/login_check',
         'use_forward' => false,
-        'require_previous_session' => false,
         'login_path' => '/login',
     ];
 
-    protected $defaultSuccessHandlerOptions = [
+    protected array $defaultSuccessHandlerOptions = [
         'always_use_default_target_path' => false,
         'default_target_path' => '/',
         'login_path' => '/login',
@@ -40,7 +36,7 @@ abstract class AbstractFactory implements AuthenticatorFactoryInterface
         'use_referer' => false,
     ];
 
-    protected $defaultFailureHandlerOptions = [
+    protected array $defaultFailureHandlerOptions = [
         'failure_path' => null,
         'failure_forward' => false,
         'login_path' => '/login',

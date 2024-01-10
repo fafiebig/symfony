@@ -32,19 +32,19 @@ use Symfony\Component\Process\PhpProcess;
  */
 abstract class AbstractBrowser
 {
-    protected $history;
-    protected $cookieJar;
-    protected $server = [];
-    protected $internalRequest;
-    protected $request;
-    protected $internalResponse;
-    protected $response;
-    protected $crawler;
+    protected History $history;
+    protected CookieJar $cookieJar;
+    protected array $server = [];
+    protected Request $internalRequest;
+    protected object $request;
+    protected Response $internalResponse;
+    protected object $response;
+    protected Crawler $crawler;
     protected bool $useHtml5Parser = true;
-    protected $insulated = false;
-    protected $redirect;
-    protected $followRedirects = true;
-    protected $followMetaRefresh = false;
+    protected bool $insulated = false;
+    protected ?string $redirect;
+    protected bool $followRedirects = true;
+    protected bool $followMetaRefresh = false;
 
     private int $maxRedirects = -1;
     private int $redirectCount = 0;
@@ -251,26 +251,29 @@ abstract class AbstractBrowser
 
     /**
      * Clicks on a given link.
+     *
+     * @param array $serverParameters An array of server parameters
      */
-    public function click(Link $link): Crawler
+    public function click(Link $link, array $serverParameters = []): Crawler
     {
         if ($link instanceof Form) {
-            return $this->submit($link);
+            return $this->submit($link, [], $serverParameters);
         }
 
-        return $this->request($link->getMethod(), $link->getUri());
+        return $this->request($link->getMethod(), $link->getUri(), [], [], $serverParameters);
     }
 
     /**
      * Clicks the first link (or clickable image) that contains the given text.
      *
-     * @param string $linkText The text of the link or the alt attribute of the clickable image
+     * @param string $linkText         The text of the link or the alt attribute of the clickable image
+     * @param array  $serverParameters An array of server parameters
      */
-    public function clickLink(string $linkText): Crawler
+    public function clickLink(string $linkText, array $serverParameters = []): Crawler
     {
         $crawler = $this->crawler ?? throw new BadMethodCallException(sprintf('The "request()" method must be called before "%s()".', __METHOD__));
 
-        return $this->click($crawler->selectLink($linkText)->link());
+        return $this->click($crawler->selectLink($linkText)->link(), $serverParameters);
     }
 
     /**

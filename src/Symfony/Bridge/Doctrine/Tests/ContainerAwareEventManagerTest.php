@@ -42,7 +42,7 @@ class ContainerAwareEventManagerTest extends TestCase
         $this->evm = new ContainerAwareEventManager($this->container, [new MySubscriber(['foo'])]);
 
         $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Using Doctrine subscriber "Symfony\Bridge\Doctrine\Tests\MySubscriber" is not allowed, declare it as a listener instead.');
+        $this->expectExceptionMessage('Using Doctrine subscriber "Symfony\Bridge\Doctrine\Tests\MySubscriber" is not allowed. Register it as a listener instead, using e.g. the #[AsDoctrineListener] or #[AsDocumentListener] attribute.');
         $this->evm->getListeners('foo');
     }
 
@@ -152,6 +152,21 @@ class ContainerAwareEventManagerTest extends TestCase
         $this->assertSame([$listener1], array_values($this->evm->getListeners('foo')));
 
         $this->evm->removeEventListener('foo', 'lazy');
+        $this->assertSame([], $this->evm->getListeners('foo'));
+    }
+
+    public function testRemoveAllEventListener()
+    {
+        $this->container->set('lazy', new MyListener());
+        $this->evm->addEventListener('foo', 'lazy');
+        $this->evm->addEventListener('foo', new MyListener());
+
+        foreach ($this->evm->getAllListeners() as $event => $listeners) {
+            foreach ($listeners as $listener) {
+                $this->evm->removeEventListener($event, $listener);
+            }
+        }
+
         $this->assertSame([], $this->evm->getListeners('foo'));
     }
 

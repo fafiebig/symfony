@@ -3,8 +3,11 @@ imports:
 
 framework:
     http_method_override: false
+    translator: true
     serializer:
         enabled: true
+        circular_reference_handler: Symfony\Bundle\FrameworkBundle\Tests\Fixtures\Serializer\CircularReferenceHandler
+        max_depth_handler: Symfony\Bundle\FrameworkBundle\Tests\Fixtures\Serializer\MaxDepthHandler
         default_context:
             enable_max_depth: true
             fake_context_option: foo
@@ -39,6 +42,10 @@ services:
         alias: serializer.normalizer.uid
         public: true
 
+    serializer.normalizer.translatable.alias:
+        alias: serializer.normalizer.translatable
+        public: true
+
     serializer.normalizer.property.alias:
         alias: serializer.normalizer.property
         public: true
@@ -58,3 +65,7 @@ services:
     serializer.encoder.csv.alias:
         alias: serializer.encoder.csv
         public: true
+
+    Symfony\Bundle\FrameworkBundle\Tests\Fixtures\Serializer\CircularReferenceHandler: ~
+
+    Symfony\Bundle\FrameworkBundle\Tests\Fixtures\Serializer\MaxDepthHandler: ~

@@ -18,8 +18,6 @@ use Symfony\Component\Webhook\Exception\RejectWebhookException;
 
 /**
  * @author Fabien Potencier <fabien@symfony.com>
- *
- * @experimental in 6.3
  */
 interface RequestParserInterface
 {
@@ -30,7 +28,7 @@ interface RequestParserInterface
      *
      * @throws RejectWebhookException When the payload is rejected (signature issue, parse issue, ...)
      */
-    public function parse(Request $request, string $secret): ?RemoteEvent;
+    public function parse(Request $request, #[\SensitiveParameter] string $secret): ?RemoteEvent;
 
     public function createSuccessfulResponse(): Response;
 

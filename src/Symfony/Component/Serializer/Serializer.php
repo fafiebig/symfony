@@ -58,15 +58,9 @@ class Serializer implements SerializerInterface, NormalizerInterface, Denormaliz
         'string' => true,
     ];
 
-    /**
-     * @var ChainEncoder
-     */
-    protected $encoder;
+    protected ChainEncoder $encoder;
 
-    /**
-     * @var ChainDecoder
-     */
-    protected $decoder;
+    protected ChainDecoder $decoder;
 
     /**
      * @var array<string, array<string, array<bool>>>
@@ -190,6 +184,7 @@ class Serializer implements SerializerInterface, NormalizerInterface, Denormaliz
 
     /**
      * @throws NotNormalizableValueException
+     * @throws PartialDenormalizationException Occurs when one or more properties of $type fails to denormalize
      */
     public function denormalize(mixed $data, string $type, string $format = null, array $context = []): mixed
     {
@@ -221,8 +216,20 @@ class Serializer implements SerializerInterface, NormalizerInterface, Denormaliz
             $context['not_normalizable_value_exceptions'] = [];
             $errors = &$context['not_normalizable_value_exceptions'];
             $denormalized = $normalizer->denormalize($data, $type, $format, $context);
+
             if ($errors) {
-                throw new PartialDenormalizationException($denormalized, $errors);
+                // merge errors so that one path has only one error
+                $uniqueErrors = [];
+                foreach ($errors as $error) {
+                    if (null === $error->getPath()) {
+                        $uniqueErrors[] = $error;
+                        continue;
+                    }
+
+                    $uniqueErrors[$error->getPath()] = $uniqueErrors[$error->getPath()] ?? $error;
+                }
+
+                throw new PartialDenormalizationException($denormalized, array_values($uniqueErrors));
             }
 
             return $denormalized;
@@ -330,9 +337,12 @@ class Serializer implements SerializerInterface, NormalizerInterface, Denormaliz
 
                 $supportedTypes = $normalizer->getSupportedTypes($format);
 
+                $doesClassRepresentCollection = str_ends_with($class, '[]');
+
                 foreach ($supportedTypes as $supportedType => $isCacheable) {
                     if (\in_array($supportedType, ['*', 'object'], true)
                         || $class !== $supportedType && ('object' !== $genericType || !is_subclass_of($class, $supportedType))
+                        && !($doesClassRepresentCollection && str_ends_with($supportedType, '[]') && is_subclass_of(strstr($class, '[]', true), strstr($supportedType, '[]', true)))
                     ) {
                         continue;
                     }

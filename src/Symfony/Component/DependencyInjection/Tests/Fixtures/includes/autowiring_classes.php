@@ -24,6 +24,16 @@ class Foo
     }
 }
 
+class FooVoid
+{
+    public static int $counter = 0;
+
+    public function __invoke(string $name): void
+    {
+        ++self::$counter;
+    }
+}
+
 class Bar
 {
     public function __construct(Foo $foo)
@@ -200,6 +210,14 @@ class MultipleArgumentsOptionalScalarLast
 {
     public function __construct(A $a, Lille $lille, $foo = 'some_val')
     {
+    }
+}
+
+class UnderscoreNamedArgument
+{
+    public function __construct(
+        public \DateTimeImmutable $now_datetime,
+    ) {
     }
 }
 

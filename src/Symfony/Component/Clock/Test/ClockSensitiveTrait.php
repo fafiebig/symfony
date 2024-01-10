@@ -35,20 +35,26 @@ trait ClockSensitiveTrait
             false === $when => self::saveClockBeforeTest(false),
             true === $when => new MockClock(),
             $when instanceof \DateTimeImmutable => new MockClock($when),
-            default => new MockClock(now()->modify($when)),
+            default => new MockClock(now($when)),
         });
 
         return Clock::get();
     }
 
     /**
+     * @beforeClass
+     *
      * @before
      *
      * @internal
      */
-    protected static function saveClockBeforeTest(bool $save = true): ClockInterface
+    public static function saveClockBeforeTest(bool $save = true): ClockInterface
     {
         static $originalClock;
+
+        if ($save && $originalClock) {
+            self::restoreClockAfterTest();
+        }
 
         return $save ? $originalClock = Clock::get() : $originalClock;
     }

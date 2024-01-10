@@ -16,8 +16,6 @@ use Symfony\Component\AssetMapper\Compiler\AssetCompilerInterface;
 /**
  * Runs a chain of compiles intended to adjust the source of assets.
  *
- * @experimental
- *
  * @final
  */
 class AssetMapperCompiler
@@ -43,5 +41,16 @@ class AssetMapperCompiler
         }
 
         return $content;
+    }
+
+    public function supports(MappedAsset $asset): bool
+    {
+        foreach ($this->assetCompilers as $compiler) {
+            if ($compiler->supports($asset)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

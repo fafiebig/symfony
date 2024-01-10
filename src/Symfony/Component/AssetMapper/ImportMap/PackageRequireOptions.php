@@ -14,20 +14,22 @@ namespace Symfony\Component\AssetMapper\ImportMap;
 /**
  * Represents a package that should be installed or updated.
  *
- * @experimental
- *
  * @author Kévin Dunglas <kevin@dunglas.dev>
  */
 final class PackageRequireOptions
 {
+    public readonly string $importName;
+
     public function __construct(
-        public readonly string $packageName,
+        /**
+         * The "package-name/path" of the remote package.
+         */
+        public readonly string $packageModuleSpecifier,
         public readonly ?string $versionConstraint = null,
-        public readonly bool $download = false,
-        public readonly bool $preload = false,
-        public readonly ?string $importName = null,
-        public readonly ?string $registryName = null,
+        string $importName = null,
         public readonly ?string $path = null,
+        public readonly bool $entrypoint = false,
     ) {
+        $this->importName = $importName ?: $packageModuleSpecifier;
     }
 }

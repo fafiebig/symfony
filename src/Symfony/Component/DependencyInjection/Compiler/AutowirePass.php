@@ -231,13 +231,17 @@ class AutowirePass extends AbstractRecursivePass
                     unset($arguments[$j]);
                     $arguments[$namedArguments[$j]] = $value;
                 }
-                if ($namedArguments || !$value instanceof $this->defaultArgument) {
+                if (!$value instanceof $this->defaultArgument) {
                     continue;
                 }
 
                 if (\is_array($value->value) ? $value->value : \is_object($value->value)) {
                     unset($arguments[$j]);
                     $namedArguments = $value->names;
+                }
+
+                if ($namedArguments) {
+                    unset($arguments[$j]);
                 } else {
                     $arguments[$j] = $value->value;
                 }
@@ -312,10 +316,7 @@ class AutowirePass extends AbstractRecursivePass
                     }
 
                     if ($attribute instanceof AutowireCallable) {
-                        $value = (new Definition($type = \is_string($attribute->lazy) ? $attribute->lazy : ($type ?: 'Closure')))
-                            ->setFactory(['Closure', 'fromCallable'])
-                            ->setArguments([\is_array($value) ? $value + [1 => '__invoke'] : $value])
-                            ->setLazy($attribute->lazy || 'Closure' !== $type && 'callable' !== (string) $parameter->getType());
+                        $value = $attribute->buildDefinition($value, $type, $parameter);
                     } elseif ($lazy = $attribute->lazy) {
                         $definition = (new Definition($type))
                             ->setFactory('current')
@@ -443,20 +444,30 @@ class AutowirePass extends AbstractRecursivePass
         $name = $target = (array_filter($reference->getAttributes(), static fn ($a) => $a instanceof Target)[0] ?? null)?->name;
 
         if (null !== $name ??= $reference->getName()) {
+            if ($this->container->has($alias = $type.' $'.$name) && !$this->container->findDefinition($alias)->isAbstract()) {
+                return new TypedReference($alias, $type, $reference->getInvalidBehavior());
+            }
+
+            if (null !== ($alias = $this->getCombinedAlias($type, $name)) && !$this->container->findDefinition($alias)->isAbstract()) {
+                return new TypedReference($alias, $type, $reference->getInvalidBehavior());
+            }
+
             $parsedName = (new Target($name))->getParsedName();
 
             if ($this->container->has($alias = $type.' $'.$parsedName) && !$this->container->findDefinition($alias)->isAbstract()) {
                 return new TypedReference($alias, $type, $reference->getInvalidBehavior());
             }
 
-            if (null !== ($alias = $this->getCombinedAlias($type, $parsedName) ?? null) && !$this->container->findDefinition($alias)->isAbstract()) {
+            if (null !== ($alias = $this->getCombinedAlias($type, $parsedName)) && !$this->container->findDefinition($alias)->isAbstract()) {
                 return new TypedReference($alias, $type, $reference->getInvalidBehavior());
             }
 
-            if ($this->container->has($name) && !$this->container->findDefinition($name)->isAbstract()) {
+            if (($this->container->has($n = $name) && !$this->container->findDefinition($n)->isAbstract())
+                || ($this->container->has($n = $parsedName) && !$this->container->findDefinition($n)->isAbstract())
+            ) {
                 foreach ($this->container->getAliases() as $id => $alias) {
-                    if ($name === (string) $alias && str_starts_with($id, $type.' $')) {
-                        return new TypedReference($name, $type, $reference->getInvalidBehavior());
+                    if ($n === (string) $alias && str_starts_with($id, $type.' $')) {
+                        return new TypedReference($n, $type, $reference->getInvalidBehavior());
                     }
                 }
             }
@@ -470,7 +481,7 @@ class AutowirePass extends AbstractRecursivePass
             return new TypedReference($type, $type, $reference->getInvalidBehavior());
         }
 
-        if (null !== ($alias = $this->getCombinedAlias($type) ?? null) && !$this->container->findDefinition($alias)->isAbstract()) {
+        if (null !== ($alias = $this->getCombinedAlias($type)) && !$this->container->findDefinition($alias)->isAbstract()) {
             return new TypedReference($alias, $type, $reference->getInvalidBehavior());
         }
 

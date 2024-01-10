@@ -241,107 +241,6 @@ class KernelTest extends TestCase
         $kernel->handle($request, $type, $catch);
     }
 
-    /**
-     * @dataProvider getStripCommentsCodes
-     */
-    public function testStripComments(string $source, string $expected)
-    {
-        $output = Kernel::stripComments($source);
-
-        // Heredocs are preserved, making the output mixing Unix and Windows line
-        // endings, switching to "\n" everywhere on Windows to avoid failure.
-        if ('\\' === \DIRECTORY_SEPARATOR) {
-            $expected = str_replace("\r\n", "\n", $expected);
-            $output = str_replace("\r\n", "\n", $output);
-        }
-
-        $this->assertEquals($expected, $output);
-    }
-
-    public static function getStripCommentsCodes(): array
-    {
-        return [
-            ['<?php echo foo();', '<?php echo foo();'],
-            ['<?php echo/**/foo();', '<?php echo foo();'],
-            ['<?php echo/** bar */foo();', '<?php echo foo();'],
-            ['<?php /**/echo foo();', '<?php echo foo();'],
-            ['<?php echo \foo();', '<?php echo \foo();'],
-            ['<?php echo/**/\foo();', '<?php echo \foo();'],
-            ['<?php echo/** bar */\foo();', '<?php echo \foo();'],
-            ['<?php /**/echo \foo();', '<?php echo \foo();'],
-            [<<<'EOF'
-<?php
-include_once \dirname(__DIR__).'/foo.php';
-
-$string = 'string should not be   modified';
-
-$string = 'string should not be
-
-modified';
-
-
-$heredoc = <<<HD
-
-
-Heredoc should not be   modified {$a[1+$b]}
-
-
-HD;
-
-$nowdoc = <<<'ND'
-
-
-Nowdoc should not be   modified
-
-
-ND;
-
-/**
- * some class comments to strip
- */
-class TestClass
-{
-    /**
-     * some method comments to strip
-     */
-    public function doStuff()
-    {
-        // inline comment
-    }
-}
-EOF
-, <<<'EOF'
-<?php
-include_once \dirname(__DIR__).'/foo.php';
-$string = 'string should not be   modified';
-$string = 'string should not be
-
-modified';
-$heredoc = <<<HD
-
-
-Heredoc should not be   modified {$a[1+$b]}
-
-
-HD;
-$nowdoc = <<<'ND'
-
-
-Nowdoc should not be   modified
-
-
-ND;
-class TestClass
-{
-    public function doStuff()
-    {
-        }
-}
-EOF
-            ],
-        ];
-    }
-
     public function testSerialize()
     {
         $env = 'test_env';
@@ -552,6 +451,7 @@ EOF
         $kernel->boot();
 
         $this->assertTrue($kernel->warmedUp);
+        $this->assertSame($kernel->getBuildDir(), $kernel->warmedUpBuildDir);
     }
 
     public function testServicesResetter()
@@ -707,6 +607,8 @@ class CustomProjectDirKernel extends Kernel implements WarmableInterface
 {
     public bool $warmedUp = false;
 
+    public ?string $warmedUpBuildDir = null;
+
     public function __construct(
         private readonly ?\Closure $buildContainer = null,
         private readonly ?HttpKernelInterface $httpKernel = null,
@@ -729,9 +631,10 @@ class CustomProjectDirKernel extends Kernel implements WarmableInterface
         return __DIR__.'/Fixtures';
     }
 
-    public function warmUp(string $cacheDir): array
+    public function warmUp(string $cacheDir, string $buildDir = null): array
     {
         $this->warmedUp = true;
+        $this->warmedUpBuildDir = $buildDir;
 
         return [];
     }

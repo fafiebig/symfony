@@ -23,6 +23,7 @@ use Symfony\Component\Security\Core\Exception\LogoutException;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Csrf\CsrfToken;
 use Symfony\Component\Security\Http\Authenticator\AuthenticatorInterface;
+use Symfony\Component\Security\Http\Authenticator\Passport\Badge\BadgeInterface;
 use Symfony\Component\Security\Http\Event\LogoutEvent;
 use Symfony\Component\Security\Http\ParameterBagUtils;
 use Symfony\Contracts\Service\ServiceProviderInterface;
@@ -73,15 +74,20 @@ class Security implements AuthorizationCheckerInterface
     }
 
     /**
-     * @param UserInterface $user              The user to authenticate
-     * @param string|null   $authenticatorName The authenticator name (e.g. "form_login") or service id (e.g. SomeApiKeyAuthenticator::class) - required only if multiple authenticators are configured
-     * @param string|null   $firewallName      The firewall name - required only if multiple firewalls are configured
+     * @param UserInterface    $user              The user to authenticate
+     * @param string|null      $authenticatorName The authenticator name (e.g. "form_login") or service id (e.g. SomeApiKeyAuthenticator::class) - required only if multiple authenticators are configured
+     * @param string|null      $firewallName      The firewall name - required only if multiple firewalls are configured
+     * @param BadgeInterface[] $badges            Badges to add to the user's passport
      *
      * @return Response|null The authenticator success response if any
      */
-    public function login(UserInterface $user, string $authenticatorName = null, string $firewallName = null): ?Response
+    public function login(UserInterface $user, string $authenticatorName = null, string $firewallName = null, array $badges = []): ?Response
     {
         $request = $this->container->get('request_stack')->getCurrentRequest();
+        if (null === $request) {
+            throw new LogicException('Unable to login without a request context.');
+        }
+
         $firewallName ??= $this->getFirewallConfig($request)?->getName();
 
         if (!$firewallName) {
@@ -92,7 +98,7 @@ class Security implements AuthorizationCheckerInterface
 
         $this->container->get('security.user_checker')->checkPreAuth($user);
 
-        return $this->container->get('security.authenticator.managers_locator')->get($firewallName)->authenticateUser($user, $authenticator, $request);
+        return $this->container->get('security.authenticator.managers_locator')->get($firewallName)->authenticateUser($user, $authenticator, $request, $badges);
     }
 
     /**
@@ -106,14 +112,17 @@ class Security implements AuthorizationCheckerInterface
      */
     public function logout(bool $validateCsrfToken = true): ?Response
     {
+        $request = $this->container->get('request_stack')->getMainRequest();
+        if (null === $request) {
+            throw new LogicException('Unable to logout without a request context.');
+        }
+
         /** @var TokenStorageInterface $tokenStorage */
         $tokenStorage = $this->container->get('security.token_storage');
 
         if (!($token = $tokenStorage->getToken()) || !$token->getUser()) {
             throw new LogicException('Unable to logout as there is no logged-in user.');
         }
-
-        $request = $this->container->get('request_stack')->getMainRequest();
 
         if (!$firewallConfig = $this->container->get('security.firewall.map')->getFirewallConfig($request)) {
             throw new LogicException('Unable to logout as the request is not behind a firewall.');

@@ -27,14 +27,9 @@ abstract class KernelTestCase extends TestCase
     use MailerAssertionsTrait;
     use NotificationAssertionsTrait;
 
-    protected static $class;
-
-    /**
-     * @var KernelInterface
-     */
-    protected static $kernel;
-
-    protected static $booted = false;
+    protected static ?string $class = null;
+    protected static ?KernelInterface $kernel = null;
+    protected static bool $booted = false;
 
     protected function tearDown(): void
     {
@@ -109,25 +104,8 @@ abstract class KernelTestCase extends TestCase
     {
         static::$class ??= static::getKernelClass();
 
-        if (isset($options['environment'])) {
-            $env = $options['environment'];
-        } elseif (isset($_ENV['APP_ENV'])) {
-            $env = $_ENV['APP_ENV'];
-        } elseif (isset($_SERVER['APP_ENV'])) {
-            $env = $_SERVER['APP_ENV'];
-        } else {
-            $env = 'test';
-        }
-
-        if (isset($options['debug'])) {
-            $debug = $options['debug'];
-        } elseif (isset($_ENV['APP_DEBUG'])) {
-            $debug = $_ENV['APP_DEBUG'];
-        } elseif (isset($_SERVER['APP_DEBUG'])) {
-            $debug = $_SERVER['APP_DEBUG'];
-        } else {
-            $debug = true;
-        }
+        $env = $options['environment'] ?? $_ENV['APP_ENV'] ?? $_SERVER['APP_ENV'] ?? 'test';
+        $debug = $options['debug'] ?? $_ENV['APP_DEBUG'] ?? $_SERVER['APP_DEBUG'] ?? true;
 
         return new static::$class($env, $debug);
     }

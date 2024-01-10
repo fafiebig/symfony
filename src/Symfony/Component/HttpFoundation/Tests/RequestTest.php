@@ -1868,6 +1868,62 @@ class RequestTest extends TestCase
     }
 
     /**
+     * @dataProvider baseUriDetectionOnIisWithRewriteData
+     */
+    public function testBaseUriDetectionOnIisWithRewrite(array $server, string $expectedBaseUrl, string $expectedPathInfo)
+    {
+        $request = new Request([], [], [], [], [], $server);
+
+        self::assertSame($expectedBaseUrl, $request->getBaseUrl());
+        self::assertSame($expectedPathInfo, $request->getPathInfo());
+    }
+
+    public static function baseUriDetectionOnIisWithRewriteData(): \Generator
+    {
+        yield 'No rewrite' => [
+            [
+                'PATH_INFO' => '/foo/bar',
+                'PHP_SELF' => '/routingtest/index.php/foo/bar',
+                'REQUEST_URI' => '/routingtest/index.php/foo/bar',
+                'SCRIPT_FILENAME' => 'C:/Users/derrabus/Projects/routing-test/public/index.php',
+                'SCRIPT_NAME' => '/routingtest/index.php',
+            ],
+            '/routingtest/index.php',
+            '/foo/bar',
+        ];
+
+        yield 'Rewrite with correct case' => [
+            [
+                'IIS_WasUrlRewritten' => '1',
+                'PATH_INFO' => '/foo/bar',
+                'PHP_SELF' => '/routingtest/index.php/foo/bar',
+                'REQUEST_URI' => '/routingtest/foo/bar',
+                'SCRIPT_FILENAME' => 'C:/Users/derrabus/Projects/routing-test/public/index.php',
+                'SCRIPT_NAME' => '/routingtest/index.php',
+                'UNENCODED_URL' => '/routingtest/foo/bar',
+            ],
+            '/routingtest',
+            '/foo/bar',
+        ];
+
+        // ISS with UrlRewriteModule might report SCRIPT_NAME/PHP_SELF with wrong case
+        // see https://github.com/php/php-src/issues/11981
+        yield 'Rewrite with case mismatch' => [
+            [
+                'IIS_WasUrlRewritten' => '1',
+                'PATH_INFO' => '/foo/bar',
+                'PHP_SELF' => '/routingtest/index.php/foo/bar',
+                'REQUEST_URI' => '/RoutingTest/foo/bar',
+                'SCRIPT_FILENAME' => 'C:/Users/derrabus/Projects/routing-test/public/index.php',
+                'SCRIPT_NAME' => '/routingtest/index.php',
+                'UNENCODED_URL' => '/RoutingTest/foo/bar',
+            ],
+            '/RoutingTest',
+            '/foo/bar',
+        ];
+    }
+
+    /**
      * @dataProvider urlencodedStringPrefixData
      */
     public function testUrlencodedStringPrefix($string, $prefix, $expect)
@@ -2476,6 +2532,23 @@ class RequestTest extends TestCase
         $_SERVER['REMOTE_ADDR'] = $serverRemoteAddr;
         Request::setTrustedProxies($trustedProxies, Request::HEADER_X_FORWARDED_FOR);
         $this->assertSame($result, Request::getTrustedProxies());
+    }
+
+    public function testTrustedValuesCache()
+    {
+        $request = Request::create('http://example.com/');
+        $request->server->set('REMOTE_ADDR', '3.3.3.3');
+        $request->headers->set('X_FORWARDED_FOR', '1.1.1.1, 2.2.2.2');
+        $request->headers->set('X_FORWARDED_PROTO', 'https');
+
+        $this->assertFalse($request->isSecure());
+
+        Request::setTrustedProxies(['3.3.3.3', '2.2.2.2'], Request::HEADER_X_FORWARDED_FOR | Request::HEADER_X_FORWARDED_HOST | Request::HEADER_X_FORWARDED_PORT | Request::HEADER_X_FORWARDED_PROTO);
+        $this->assertTrue($request->isSecure());
+
+        // Header is changed, cache must not be hit now
+        $request->headers->set('X_FORWARDED_PROTO', 'http');
+        $this->assertFalse($request->isSecure());
     }
 
     public static function trustedProxiesRemoteAddr()

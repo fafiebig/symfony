@@ -12,6 +12,7 @@
 namespace Symfony\Bundle\TwigBundle\Tests\Functional;
 
 use Symfony\Bundle\FrameworkBundle\FrameworkBundle;
+use Symfony\Bundle\FrameworkBundle\Test\HttpClientAssertionsTrait;
 use Symfony\Bundle\TwigBundle\Tests\TestCase;
 use Symfony\Bundle\TwigBundle\TwigBundle;
 use Symfony\Component\Config\Loader\LoaderInterface;
@@ -62,13 +63,20 @@ class NoTemplatingEntryKernel extends Kernel
     public function registerContainerConfiguration(LoaderInterface $loader): void
     {
         $loader->load(function (ContainerBuilder $container) {
+            $config = [
+                'annotations' => false,
+                'http_method_override' => false,
+                'php_errors' => ['log' => true],
+                'secret' => '$ecret',
+                'form' => ['enabled' => false],
+            ];
+
+            if (trait_exists(HttpClientAssertionsTrait::class)) {
+                $config['handle_all_throwables'] = true;
+            }
+
             $container
-                ->loadFromExtension('framework', [
-                    'annotations' => false,
-                    'http_method_override' => false,
-                    'secret' => '$ecret',
-                    'form' => ['enabled' => false],
-                ])
+                ->loadFromExtension('framework', $config)
                 ->loadFromExtension('twig', [
                     'default_path' => __DIR__.'/templates',
                 ])

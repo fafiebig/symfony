@@ -59,14 +59,13 @@ class HtmlDumper extends CliDumper
         ],
     ];
 
-    protected $dumpHeader;
-    protected $dumpPrefix = '<pre class=sf-dump id=%s data-indent-pad="%s">';
-    protected $dumpSuffix = '</pre><script>Sfdump(%s)</script>';
-    protected $dumpId = 'sf-dump';
-    protected $colors = true;
+    protected ?string $dumpHeader = null;
+    protected string $dumpPrefix = '<pre class=sf-dump id=%s data-indent-pad="%s">';
+    protected string $dumpSuffix = '</pre><script>Sfdump(%s)</script>';
+    protected string $dumpId;
+    protected bool $colors = true;
     protected $headerIsDumped = false;
-    protected $lastDepth = -1;
-    protected $styles;
+    protected int $lastDepth = -1;
 
     private array $displayOptions = [
         'maxDepth' => 1,
@@ -649,7 +648,7 @@ pre.sf-dump:after {
    clear: both;
 }
 pre.sf-dump span {
-    display: inline;
+    display: inline-flex;
 }
 pre.sf-dump a {
     text-decoration: none;

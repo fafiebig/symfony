@@ -53,11 +53,16 @@ class WebProfilerBundleKernel extends Kernel
         $config = [
             'annotations' => false,
             'http_method_override' => false,
+            'php_errors' => ['log' => true],
             'secret' => 'foo-secret',
             'profiler' => ['only_exceptions' => false],
-            'session' => ['storage_factory_id' => 'session.storage.factory.mock_file'],
+            'session' => ['handler_id' => null, 'storage_factory_id' => 'session.storage.factory.mock_file', 'cookie-secure' => 'auto', 'cookie-samesite' => 'lax'],
             'router' => ['utf8' => true],
         ];
+
+        if (Kernel::VERSION_ID >= 60400) {
+            $config['handle_all_throwables'] = true;
+        }
 
         $container->loadFromExtension('framework', $config);
 
@@ -83,7 +88,7 @@ class WebProfilerBundleKernel extends Kernel
         $container->register('logger', NullLogger::class);
     }
 
-    public function homepageController()
+    public function homepageController(): Response
     {
         return new Response('<html><head></head><body>Homepage Controller.</body></html>');
     }

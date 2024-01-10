@@ -14,6 +14,7 @@ namespace Symfony\Bundle\FrameworkBundle\Console\Descriptor;
 use Symfony\Component\Console\Formatter\OutputFormatter;
 use Symfony\Component\Console\Helper\Dumper;
 use Symfony\Component\Console\Helper\Table;
+use Symfony\Component\Console\Helper\TableCell;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\DependencyInjection\Alias;
 use Symfony\Component\DependencyInjection\Argument\AbstractArgument;
@@ -25,8 +26,8 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
 use Symfony\Component\DependencyInjection\Reference;
+use Symfony\Component\ErrorHandler\ErrorRenderer\FileLinkFormatter;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
-use Symfony\Component\HttpKernel\Debug\FileLinkFormatter;
 use Symfony\Component\Routing\Route;
 use Symfony\Component\Routing\RouteCollection;
 
@@ -53,6 +54,10 @@ class TextDescriptor extends Descriptor
             $tableHeaders[] = 'Controller';
         }
 
+        if ($showAliases = $options['show_aliases'] ?? false) {
+            $tableHeaders[] = 'Aliases';
+        }
+
         $tableRows = [];
         foreach ($routes->all() as $name => $route) {
             $controller = $route->getDefault('_controller');
@@ -67,6 +72,10 @@ class TextDescriptor extends Descriptor
 
             if ($showControllers) {
                 $row[] = $controller ? $this->formatControllerLink($controller, $this->formatCallable($controller), $options['container'] ?? null) : '';
+            }
+
+            if ($showAliases) {
+                $row[] = implode('|', ($reverseAliases ??= $this->getReverseAliases($routes))[$name] ?? []);
             }
 
             $tableRows[] = $row;
@@ -116,9 +125,18 @@ class TextDescriptor extends Descriptor
     {
         $tableHeaders = ['Parameter', 'Value'];
 
+        $deprecatedParameters = $parameters->allDeprecated();
+
         $tableRows = [];
         foreach ($this->sortParameters($parameters) as $parameter => $value) {
             $tableRows[] = [$parameter, $this->formatParameter($value)];
+
+            if (isset($deprecatedParameters[$parameter])) {
+                $tableRows[] = [new TableCell(
+                    sprintf('<comment>(Since %s %s: %s)</comment>', $deprecatedParameters[$parameter][0], $deprecatedParameters[$parameter][1], sprintf(...\array_slice($deprecatedParameters[$parameter], 2))),
+                    ['colspan' => 2]
+                )];
+            }
         }
 
         $options['output']->title('Symfony Container Parameters');
@@ -209,6 +227,10 @@ class TextDescriptor extends Descriptor
                             if (!isset($maxTags[$key])) {
                                 $maxTags[$key] = \strlen($key);
                             }
+                            if (\is_array($value)) {
+                                $value = $this->formatParameter($value);
+                            }
+
                             if (\strlen($value) > $maxTags[$key]) {
                                 $maxTags[$key] = \strlen($value);
                             }
@@ -233,7 +255,11 @@ class TextDescriptor extends Descriptor
                     foreach ($this->sortByPriority($definition->getTag($showTag)) as $key => $tag) {
                         $tagValues = [];
                         foreach ($tagsNames as $tagName) {
-                            $tagValues[] = $tag[$tagName] ?? '';
+                            if (\is_array($tagValue = $tag[$tagName] ?? '')) {
+                                $tagValue = $this->formatParameter($tagValue);
+                            }
+
+                            $tagValues[] = $tagValue;
                         }
                         if (0 === $key) {
                             $tableRows[] = array_merge([$serviceId], $tagValues, [$definition->getClass()]);
@@ -275,7 +301,7 @@ class TextDescriptor extends Descriptor
             $tagInformation = [];
             foreach ($tags as $tagName => $tagData) {
                 foreach ($tagData as $tagParameters) {
-                    $parameters = array_map(fn ($key, $value) => sprintf('<info>%s</info>: %s', $key, $value), array_keys($tagParameters), array_values($tagParameters));
+                    $parameters = array_map(fn ($key, $value) => sprintf('<info>%s</info>: %s', $key, \is_array($value) ? $this->formatParameter($value) : $value), array_keys($tagParameters), array_values($tagParameters));
                     $parameters = implode(', ', $parameters);
 
                     if ('' === $parameters) {
@@ -409,14 +435,21 @@ class TextDescriptor extends Descriptor
         $this->describeContainerDefinition($container->getDefinition((string) $alias), array_merge($options, ['id' => (string) $alias]), $container);
     }
 
-    protected function describeContainerParameter(mixed $parameter, array $options = []): void
+    protected function describeContainerParameter(mixed $parameter, ?array $deprecation, array $options = []): void
     {
-        $options['output']->table(
-            ['Parameter', 'Value'],
-            [
-                [$options['parameter'], $this->formatParameter($parameter),
-            ],
-        ]);
+        $parameterName = $options['parameter'];
+        $rows = [
+            [$parameterName, $this->formatParameter($parameter)],
+        ];
+
+        if ($deprecation) {
+            $rows[] = [new TableCell(
+                sprintf('<comment>(Since %s %s: %s)</comment>', $deprecation[0], $deprecation[1], sprintf(...\array_slice($deprecation, 2))),
+                ['colspan' => 2]
+            )];
+        }
+
+        $options['output']->table(['Parameter', 'Value'], $rows);
     }
 
     protected function describeContainerEnvVars(array $envs, array $options = []): void
